@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "1014896489487",
+    "firebase_url": "https://family-map-1222c-default-rtdb.firebaseio.com",
+    "project_id": "family-map-1222c",
+    "storage_bucket": "family-map-1222c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1014896489487:android:4d41cc8a661d3e8ef25f7a",
+        "android_client_info": {
+          "package_name": "com.naylinhte.family_map"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCZd5IyP83F9ZexuOUKTPqGn-JQBXmpnJ4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

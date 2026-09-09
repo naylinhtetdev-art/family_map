@@ -2,6 +2,7 @@ import 'package:family_map/firebase_options.dart';
 import 'package:family_map/provider/auth_provider.dart';
 import 'package:family_map/provider/language_provider.dart';
 import 'package:family_map/provider/location_provider.dart';
+import 'package:family_map/provider/member_provider.dart';
 import 'package:family_map/provider/theme_provider.dart';
 import 'package:family_map/utils/app_language.dart';
 import 'package:family_map/utils/constants.dart';
@@ -37,6 +38,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => LanguageProvider()),
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => LocationProvider()),
+        ChangeNotifierProvider(create: (_) => MemberProvider()),
       ],
       child: const MyApp(),
     ),

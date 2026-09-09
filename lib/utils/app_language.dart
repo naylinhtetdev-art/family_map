@@ -9,14 +9,12 @@ mixin AppLocale {
   static const String accountSetting = 'accountSetting';
   static const String termsPrivacy = 'termsPrivacy';
   static const String logout = 'logout';
-  static const String navHome = 'navHome';
-  static const String navQuick = 'navQuick';
-  static const String navService = 'navService';
-  static const String navChat = 'navChat';
-  static const String navMe = 'navMe';
+  static const String navLocation = 'navLocation';
+  static const String navMember = 'navMember';
+  static const String navProfile = 'navProfile';
 
   static const Map<String, dynamic> EN = {
-    appTitle: 'OLLIO',
+    appTitle: 'Family Map',
     selectLanguage: 'Select Language',
     verifiedLocal: 'Verified Local',
     forYou: 'For You',
@@ -26,15 +24,13 @@ mixin AppLocale {
     accountSetting: 'Account Setting',
     termsPrivacy: 'Terms & Privacy',
     logout: 'Logout',
-    navHome: 'Home',
-    navQuick: 'Quick',
-    navService: 'Services',
-    navChat: 'Chat',
-    navMe: 'Me',
+    navLocation: 'Location',
+    navMember: 'Member',
+    navProfile: 'Profile',
   };
 
   static const Map<String, dynamic> MY = {
-    appTitle: 'OLLIO',
+    appTitle: 'Family Map',
     selectLanguage: 'ဘာသာစကား ရွေးရန်',
     verifiedLocal: 'အကောင့်စစ်ဆေးပြီးသူ',
     forYou: 'သင့်အတွက်',
@@ -44,10 +40,8 @@ mixin AppLocale {
     accountSetting: 'အကောင့် ပြင်ဆင်ချက်',
     termsPrivacy: 'စည်းမျဉ်းနှင့် မူဝါဒများ',
     logout: 'ထွက်မည်',
-    navHome: 'ပင်မ',
-    navQuick: 'Quick',
-    navService: 'ဝန်ဆောင်မှု',
-    navChat: 'စာဝင်ပုံး',
-    navMe: 'ကျွန်ုပ်',
+    navLocation: 'တည်နေရာ',
+    navMember: 'အဖွဲ့ဝင်',
+    navProfile: 'ကျွန်ုပ်',
   };
 }

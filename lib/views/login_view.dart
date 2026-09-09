@@ -287,6 +287,15 @@ class _LoginViewState extends State<LoginView> {
                                   children: [
                                     Checkbox(
                                       value: _remember,
+                                      // activeColor: Theme.of(
+                                      //   context,
+                                      // ).primaryColor,
+                                      checkColor: Colors.green,
+                                      side: const BorderSide(
+                                        color: AppColors
+                                            .primary, // Check မခတ်ထားချိန် ပေါ်မည့် အပြင်ဘောင်အရောင်
+                                        width: 2.0, // ဘောင်အထူ
+                                      ),
                                       onChanged: (v) => setState(
                                         () => _remember = v ?? false,
                                       ),
@@ -295,6 +304,7 @@ class _LoginViewState extends State<LoginView> {
                                       'Remember me',
                                       style: TextStyle(
                                         fontSize: isTablet ? 7.sp : 14.sp,
+                                        color: AppColors.black,
                                       ),
                                     ),
                                   ],

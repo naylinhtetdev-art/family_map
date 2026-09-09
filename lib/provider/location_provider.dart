@@ -11,7 +11,7 @@ class LocationProvider extends ChangeNotifier {
   bool _isTracking = false;
   String? _errorMessage;
   Position? _currentPosition;
-
+  DateTime? _lastUpdateTime;
   bool get isTracking => _isTracking;
   String? get errorMessage => _errorMessage;
   Position? get currentPosition => _currentPosition;
@@ -62,8 +62,14 @@ class LocationProvider extends ChangeNotifier {
         Geolocator.getPositionStream(locationSettings: locationSettings).listen(
           (Position position) {
             _currentPosition = position;
-            _updateLocationInFirestore(userId, position);
+            //_updateLocationInFirestore(userId, position);
             notifyListeners();
+            final now = DateTime.now();
+            if (_lastUpdateTime == null ||
+                now.difference(_lastUpdateTime!).inSeconds >= 10) {
+              _lastUpdateTime = now;
+              _updateLocationInFirestore(userId, position);
+            }
           },
         );
   }

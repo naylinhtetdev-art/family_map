@@ -102,7 +102,7 @@ class _CreateScreenState extends State<CreateScreen> {
                         children: [
                           Icon(
                             Icons.family_restroom_sharp,
-                            color: AppColors.accentYellow,
+                            color: AppColors.green,
                             size: 42.r,
                           ),
                           SizedBox(width: 8.w),
@@ -116,7 +116,17 @@ class _CreateScreenState extends State<CreateScreen> {
                           ),
                         ],
                       ),
-                      SizedBox(height: 40.h),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Image.asset(
+                            'assets/logo/app_logo_no_bk.png',
+                            width: 80.w,
+                            height: 80.h,
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 0),
                       Center(
                         child: Text(
                           'Create Account!',
@@ -127,7 +137,7 @@ class _CreateScreenState extends State<CreateScreen> {
                           ),
                         ),
                       ),
-                      SizedBox(height: 8.h),
+                      SizedBox(height: 0),
                       Center(
                         child: Text(
                           'Create new an account to get started and enjoy\n seamless access to our features.',
@@ -138,11 +148,11 @@ class _CreateScreenState extends State<CreateScreen> {
                           ),
                         ),
                       ),
-                      SizedBox(height: 18.h),
+                      SizedBox(height: 10.h),
                       Text(
                         'Full Name',
                         style: TextStyle(
-                          fontSize: isTablet ? 7.sp : 14.sp,
+                          fontSize: isTablet ? 7.sp : 16.sp,
                           color: Colors.grey.shade700,
                         ),
                       ),
@@ -154,7 +164,7 @@ class _CreateScreenState extends State<CreateScreen> {
                             ? 'Enter your full name'
                             : null,
                         style: TextStyle(
-                          fontSize: isTablet ? 7.sp : 14.sp,
+                          fontSize: isTablet ? 7.sp : 16.sp,
                           color: Colors.black,
                         ),
                         decoration: InputDecoration(
@@ -184,7 +194,7 @@ class _CreateScreenState extends State<CreateScreen> {
                       Text(
                         'Email Address',
                         style: TextStyle(
-                          fontSize: isTablet ? 7.sp : 14.sp,
+                          fontSize: isTablet ? 7.sp : 16.sp,
                           color: Colors.grey.shade700,
                         ),
                       ),
@@ -205,7 +215,7 @@ class _CreateScreenState extends State<CreateScreen> {
                           return null;
                         },
                         style: TextStyle(
-                          fontSize: isTablet ? 7.sp : 14.sp,
+                          fontSize: isTablet ? 7.sp : 16.sp,
                           color: Colors.black,
                         ),
                         decoration: InputDecoration(
@@ -235,7 +245,7 @@ class _CreateScreenState extends State<CreateScreen> {
                       Text(
                         'Password',
                         style: TextStyle(
-                          fontSize: isTablet ? 7.sp : 14.sp,
+                          fontSize: isTablet ? 7.sp : 16.sp,
                           color: Colors.grey.shade700,
                         ),
                       ),
@@ -247,7 +257,7 @@ class _CreateScreenState extends State<CreateScreen> {
                             ? 'Use at least 6 characters'
                             : null,
                         style: TextStyle(
-                          fontSize: isTablet ? 7.sp : 14.sp,
+                          fontSize: isTablet ? 7.sp : 16.sp,
                           color: Colors.black,
                         ),
                         decoration: InputDecoration(
@@ -291,7 +301,7 @@ class _CreateScreenState extends State<CreateScreen> {
                       Text(
                         'Confirm Password',
                         style: TextStyle(
-                          fontSize: isTablet ? 7.sp : 14.sp,
+                          fontSize: isTablet ? 7.sp : 16.sp,
                           color: Colors.grey.shade700,
                         ),
                       ),
@@ -303,7 +313,7 @@ class _CreateScreenState extends State<CreateScreen> {
                             ? 'Passwords do not match'
                             : null,
                         style: TextStyle(
-                          fontSize: isTablet ? 7.sp : 14.sp,
+                          fontSize: isTablet ? 7.sp : 16.sp,
                           color: Colors.black,
                         ),
                         decoration: InputDecoration(
@@ -344,7 +354,7 @@ class _CreateScreenState extends State<CreateScreen> {
                           ),
                         ),
                       ),
-                      SizedBox(height: 26.h),
+                      SizedBox(height: 20.h),
 
                       SizedBox(
                         width: double.infinity,
@@ -377,7 +387,7 @@ class _CreateScreenState extends State<CreateScreen> {
                                 ),
                         ),
                       ),
-                      SizedBox(height: 12.h),
+                      SizedBox(height: 8.h),
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -442,7 +452,7 @@ class _CreateScreenState extends State<CreateScreen> {
                           ),
                         ],
                       ),
-                      SizedBox(height: 15.h),
+                      SizedBox(height: 4.h),
                       Row(
                         children: [
                           Expanded(
@@ -469,7 +479,7 @@ class _CreateScreenState extends State<CreateScreen> {
                           ),
                         ],
                       ),
-                      SizedBox(height: 15.h),
+                      SizedBox(height: 4.h),
                       Center(
                         child: RichText(
                           text: TextSpan(
@@ -478,12 +488,16 @@ class _CreateScreenState extends State<CreateScreen> {
                               color: Colors.grey.shade500,
                             ),
                             children: [
-                              TextSpan(text: 'Already have an account?  '),
+                              TextSpan(
+                                text: 'Already have an account?  ',
+                                style: TextStyle(fontSize: 16.sp),
+                              ),
                               TextSpan(
                                 text: 'Sign in',
                                 style: TextStyle(
                                   color: AppColors.primary,
                                   fontWeight: FontWeight.w600,
+                                  fontSize: 16.sp,
                                 ),
                                 recognizer: _tapRecognizer,
                               ),

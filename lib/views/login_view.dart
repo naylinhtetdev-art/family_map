@@ -146,7 +146,7 @@ class _LoginViewState extends State<LoginView> {
                               children: [
                                 Icon(
                                   Icons.family_restroom_sharp,
-                                  color: AppColors.accentYellow,
+                                  color: AppColors.green,
                                   size: 42.r,
                                 ),
                                 SizedBox(width: 8.w),
@@ -160,7 +160,17 @@ class _LoginViewState extends State<LoginView> {
                                 ),
                               ],
                             ),
-                            SizedBox(height: 40.h),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Image.asset(
+                                  'assets/logo/app_logo_no_bk.png',
+                                  width: 80.w,
+                                  height: 80.h,
+                                ),
+                              ],
+                            ),
+                            //SizedBox(height: 40.h),
                             Center(
                               child: Text(
                                 'Login Account!',
@@ -187,7 +197,7 @@ class _LoginViewState extends State<LoginView> {
                             Text(
                               'Email Address',
                               style: TextStyle(
-                                fontSize: isTablet ? 7.sp : 14.sp,
+                                fontSize: isTablet ? 7.sp : 16.sp,
                                 color: Colors.grey.shade700,
                               ),
                             ),
@@ -199,7 +209,7 @@ class _LoginViewState extends State<LoginView> {
                                   ? 'Enter a valid email'
                                   : null,
                               style: TextStyle(
-                                fontSize: isTablet ? 7.sp : 14.sp,
+                                fontSize: isTablet ? 7.sp : 16.sp,
                                 color: Colors.black,
                               ),
                               decoration: InputDecoration(
@@ -229,7 +239,7 @@ class _LoginViewState extends State<LoginView> {
                             Text(
                               'Password',
                               style: TextStyle(
-                                fontSize: isTablet ? 7.sp : 14.sp,
+                                fontSize: isTablet ? 7.sp : 16.sp,
                                 color: Colors.grey.shade700,
                               ),
                             ),
@@ -241,7 +251,7 @@ class _LoginViewState extends State<LoginView> {
                                   ? 'Enter your password'
                                   : null,
                               style: TextStyle(
-                                fontSize: isTablet ? 7.sp : 14.sp,
+                                fontSize: isTablet ? 7.sp : 16.sp,
                                 color: Colors.black,
                               ),
                               decoration: InputDecoration(
@@ -391,7 +401,7 @@ class _LoginViewState extends State<LoginView> {
                               child: RichText(
                                 text: TextSpan(
                                   style: TextStyle(
-                                    fontSize: isTablet ? 6.sp : 12.sp,
+                                    fontSize: isTablet ? 6.sp : 14.sp,
                                     color: Colors.grey.shade500,
                                   ),
                                   children: [

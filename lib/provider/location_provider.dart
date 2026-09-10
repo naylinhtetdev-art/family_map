@@ -16,6 +16,14 @@ class LocationProvider extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
   Position? get currentPosition => _currentPosition;
 
+  StreamSubscription? _memberSubscription;
+  void clearData() {
+    _memberSubscription?.cancel();
+    _memberSubscription = null;
+    // အခြား Member Data များကိုပါ Reset လုပ်ပါ
+    notifyListeners();
+  }
+
   // Location Permission စစ်ဆေးခြင်း
   Future<bool> _checkPermission() async {
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();

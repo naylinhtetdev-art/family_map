@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:family_map/main.dart';
 import 'package:family_map/provider/auth_provider.dart';
 import 'package:family_map/provider/language_provider.dart';
+import 'package:family_map/provider/location_provider.dart';
 import 'package:family_map/provider/member_provider.dart';
 import 'package:family_map/provider/theme_provider.dart';
 import 'package:family_map/utils/app_language.dart';
@@ -9,6 +9,7 @@ import 'package:family_map/widgtes/change_password.dart';
 import 'package:family_map/widgtes/show_noti_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localization/flutter_localization.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 
 class ProfileTapScreen extends StatelessWidget {
@@ -173,12 +174,24 @@ class ProfileTapScreen extends StatelessWidget {
             leading: const Icon(Icons.logout, color: Colors.red),
             title: const Text('Log out', style: TextStyle(color: Colors.red)),
             onTap: () async {
-              await auth.logout();
-              if (context.mounted) {
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (_) => const MyApp()),
-                  (_) => false,
-                );
+              final locationProvider = context.read<LocationProvider>();
+              final memberProvider = context.read<MemberProvider>();
+              final languageProvider = context.read<LanguageProvider>();
+
+              try {
+                await auth.logout();
+                locationProvider.stopLocationTracking();
+                memberProvider.clearData();
+                languageProvider.clearData();
+                locationProvider.clearData();
+              } catch (_) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Unable to log out. Please try again.'),
+                    ),
+                  );
+                }
               }
             },
           ),
@@ -186,93 +199,6 @@ class ProfileTapScreen extends StatelessWidget {
       ),
     );
   }
-
-  // Location Request လက်ခံရန်/ငြင်းပယ်ရန် ပေါ်လာမည့် Dialog
-  // void _showRequestsDialog(
-  //   BuildContext context,
-  //   List<QueryDocumentSnapshot> requests,
-  //   String myUid,
-  // ) {
-  //   if (requests.isEmpty) {
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       const SnackBar(content: Text('No pending location requests')),
-  //     );
-  //     return;
-  //   }
-
-  //   showDialog(
-  //     context: context,
-  //     builder: (context) {
-  //       return AlertDialog(
-  //         title: const Text('Location Requests'),
-  //         content: SizedBox(
-  //           width: double.maxFinite,
-  //           child: ListView.builder(
-  //             shrinkWrap: true,
-  //             itemCount: requests.length,
-  //             itemBuilder: (context, index) {
-  //               final doc = requests[index];
-  //               final data = doc.data() as Map<String, dynamic>;
-  //               final senderEmail = data['senderEmail'] ?? 'Unknown Email';
-  //               final senderUid = data['senderUid'] ?? '';
-
-  //               return ListTile(
-  //                 contentPadding: EdgeInsets.zero,
-  //                 title: Text(senderEmail),
-  //                 subtitle: const Text('wants to share location with you.'),
-  //                 trailing: Row(
-  //                   mainAxisSize: MainAxisSize.min,
-  //                   children: [
-  //                     // Reject Button
-  //                     IconButton(
-  //                       icon: const Icon(Icons.close, color: Colors.red),
-  //                       onPressed: () async {
-  //                         await context.read<MemberProvider>().rejectRequest(
-  //                           doc.id,
-  //                         );
-  //                         if (context.mounted) Navigator.pop(context);
-  //                       },
-  //                     ),
-  //                     // Accept Button
-  //                     IconButton(
-  //                       icon: const Icon(
-  //                         Icons.check_circle,
-  //                         color: Colors.green,
-  //                       ),
-  //                       onPressed: () async {
-  //                         await context.read<MemberProvider>().acceptRequest(
-  //                           requestId: doc.id,
-  //                           senderUid: senderUid,
-  //                           receiverUid: myUid,
-  //                         );
-  //                         if (context.mounted) {
-  //                           Navigator.pop(context);
-  //                           ScaffoldMessenger.of(context).showSnackBar(
-  //                             SnackBar(
-  //                               content: Text(
-  //                                 'Accepted request from $senderEmail',
-  //                               ),
-  //                             ),
-  //                           );
-  //                         }
-  //                       },
-  //                     ),
-  //                   ],
-  //                 ),
-  //               );
-  //             },
-  //           ),
-  //         ),
-  //         actions: [
-  //           TextButton(
-  //             onPressed: () => Navigator.pop(context),
-  //             child: const Text('Close'),
-  //           ),
-  //         ],
-  //       );
-  //     },
-  //   );
-  // }
 
   Widget _tile(
     BuildContext context,

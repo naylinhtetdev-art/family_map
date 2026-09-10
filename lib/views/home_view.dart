@@ -1,6 +1,8 @@
+import 'package:family_map/main.dart';
 import 'package:family_map/provider/auth_provider.dart';
 import 'package:family_map/provider/language_provider.dart';
 import 'package:family_map/provider/location_provider.dart';
+import 'package:family_map/provider/member_provider.dart';
 import 'package:family_map/provider/theme_provider.dart';
 import 'package:family_map/utils/app_language.dart';
 import 'package:family_map/utils/constants.dart';
@@ -9,9 +11,7 @@ import 'package:family_map/views/member_tap_screen.dart';
 import 'package:family_map/views/profile_tap_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localization/flutter_localization.dart';
-import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 
 class HomeView extends StatefulWidget {
@@ -50,16 +50,10 @@ class _HomeViewState extends State<HomeView> {
 
   @override
   Widget build(BuildContext context) {
-    final languageProvider = context.watch<LanguageProvider>();
-    final themeProvider = context.watch<ThemeProvider>();
-    final isDark = themeProvider.themeMode == ThemeMode.dark;
-
     final theme = Theme.of(context);
     final bgColor = theme.scaffoldBackgroundColor;
     final textColor = theme.colorScheme.onSurface;
     final iconColor = theme.iconTheme.color ?? textColor;
-
-    final authVM = context.watch<AuthProvider>();
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -76,13 +70,33 @@ class _HomeViewState extends State<HomeView> {
                 elevation: 8,
                 iconTheme: IconThemeData(color: iconColor),
                 titleSpacing: 10,
-                title: Text(
-                  AppLocale.appTitle.getString(context),
-                  style: TextStyle(
-                    color: AppColors.primary,
-                    fontSize: 28.sp,
-                    fontWeight: FontWeight.bold,
-                  ),
+                // title: Text(
+                //   AppLocale.appTitle.getString(context),
+                //   style: TextStyle(
+                //     color: AppColors.primary,
+                //     fontSize: 28.sp,
+                //     fontWeight: FontWeight.bold,
+                //   ),
+                // ),
+                title: Row(
+                  children: [
+                    Image.asset(
+                      'assets/logo/app_logo_no_bk.png',
+                      width: 32.w,
+                      height: 32.h,
+                      fit: BoxFit.contain,
+                    ),
+                    SizedBox(width: 8.w),
+                    // 2. Title Text
+                    Text(
+                      AppLocale.appTitle.getString(context),
+                      style: TextStyle(
+                        color: AppColors.primary,
+                        fontSize: 28.sp,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
                 ),
                 actions: _buildAppBarActions(iconColor),
               ),
@@ -158,8 +172,37 @@ class _HomeViewState extends State<HomeView> {
       IconButton(
         icon: Icon(Icons.logout, color: iconColor),
         onPressed: () {
-          context.read<LocationProvider>().stopLocationTracking();
-          context.read<AuthProvider>().logout();
+          final authProvider = context.read<AuthProvider>();
+          final locationProvider = context.read<LocationProvider>();
+          final memberProvider = context.read<MemberProvider>();
+          final languageProvider = context.read<LanguageProvider>();
+
+          try {
+            authProvider.logout();
+            locationProvider.stopLocationTracking();
+            memberProvider.clearData();
+            languageProvider.clearData();
+            locationProvider.clearData();
+          } catch (_) {
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Unable to log out. Please try again.'),
+                ),
+              );
+            }
+          }
+          // context.read<LocationProvider>().stopLocationTracking();
+          // context.read<MemberProvider>().clearData();
+          // context.read<LanguageProvider>().clearData();
+          // context.read<LocationProvider>().clearData();
+          // context.read<AuthProvider>().logout();
+          // if (context.mounted) {
+          //   Navigator.of(context).pushAndRemoveUntil(
+          //     MaterialPageRoute(builder: (_) => const MyApp()),
+          //     (_) => false,
+          //   );
+          // }
         },
       ),
     ];

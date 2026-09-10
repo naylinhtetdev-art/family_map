@@ -122,11 +122,11 @@ class LandingPage extends StatelessWidget {
     final auth = context.watch<AuthProvider>();
     if (auth.loading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
-    if (auth.signedIn && auth.isRemembered) {
+    } else if (auth.signedIn && auth.isRemembered) {
       return const HomeView();
-    }
-    if (auth.isFirstTimeUser) {
+    } else if (auth.signedIn) {
+      const LoginView();
+    } else if (auth.isFirstTimeUser) {
       return Scaffold(
         body: Stack(
           children: [
@@ -153,7 +153,7 @@ class LandingPage extends StatelessWidget {
                       children: [
                         Icon(
                           Icons.family_restroom_sharp,
-                          color: AppColors.accentYellow,
+                          color: AppColors.green,
                           size: 42.r,
                         ),
                         SizedBox(width: 8.w),
@@ -166,6 +166,12 @@ class LandingPage extends StatelessWidget {
                           ),
                         ),
                       ],
+                    ),
+                    SizedBox(height: 20.h),
+                    Image.asset(
+                      'assets/logo/app_logo_no_bk.png',
+                      width: 200.w,
+                      height: 200.h,
                     ),
                     Spacer(),
                     Text(
@@ -183,8 +189,8 @@ class LandingPage extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         _buildDot(isActive: true),
-                        _buildDot(isActive: false),
-                        _buildDot(isActive: false),
+                        // _buildDot(isActive: false),
+                        //_buildDot(isActive: false),
                       ],
                     ),
                     SizedBox(height: 30.h),
@@ -230,7 +236,7 @@ class LandingPage extends StatelessWidget {
                       child: RichText(
                         text: TextSpan(
                           style: TextStyle(
-                            fontSize: 14.sp,
+                            fontSize: 16.sp,
                             color: Colors.white,
                           ),
                           children: [

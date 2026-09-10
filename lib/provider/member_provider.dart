@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:family_map/model/member_model.dart';
 import 'package:flutter/foundation.dart';
@@ -10,6 +12,15 @@ class MemberProvider with ChangeNotifier {
 
   void _setLoading(bool value) {
     _isLoading = value;
+    notifyListeners();
+  }
+
+  StreamSubscription? _memberSubscription;
+
+  void clearData() {
+    _memberSubscription?.cancel();
+    _memberSubscription = null;
+    // အခြား Member Data များကိုပါ Reset လုပ်ပါ
     notifyListeners();
   }
 

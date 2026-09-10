@@ -95,7 +95,10 @@ class _MemberTapScreenState extends State<MemberTapScreen> {
           final double distanceKm = distanceMeters / 1000;
 
           final double driveSeconds = (route['duration'] as num).toDouble();
-          final String driveDurationStr = _formatDuration(driveSeconds);
+          final double realisticDriveSeconds = driveSeconds * 3;
+          final String driveDurationStr = _formatDuration(
+            realisticDriveSeconds,
+          );
 
           final List geometry = route['geometry']['coordinates'];
           final List<LatLng> points = geometry.map((coord) {
@@ -112,7 +115,8 @@ class _MemberTapScreenState extends State<MemberTapScreen> {
                 (walkData['routes'] as List).isNotEmpty) {
               final double walkSeconds =
                   (walkData['routes'][0]['duration'] as num).toDouble();
-              walkDurationStr = _formatDuration(walkSeconds);
+              final double realisticWalkSeconds = walkSeconds * 9;
+              walkDurationStr = _formatDuration(realisticWalkSeconds);
             }
           }
 
@@ -327,10 +331,10 @@ class _MemberTapScreenState extends State<MemberTapScreen> {
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
-                                  const Icon(
-                                    Icons.my_location,
-                                    color: Colors.blue,
-                                    size: 35.0,
+                                  Image.asset(
+                                    'assets/logo/app_logo_no_bk.png',
+                                    width: 46.w,
+                                    height: 46.h,
                                   ),
                                 ],
                               ),
@@ -581,7 +585,12 @@ class _MemberTapScreenState extends State<MemberTapScreen> {
             heroTag: 'btnMyLoc',
             onPressed: () => _animatedMoveToCurrentLocation(myLocation),
             backgroundColor: Theme.of(context).primaryColor,
-            child: const Icon(Icons.my_location, color: Colors.white),
+            child: Image.asset(
+              'assets/logo/app_logo_no_bk.png',
+              width: 42.w,
+              height: 42.h,
+              color: Colors.white,
+            ),
           ),
         ],
       ),

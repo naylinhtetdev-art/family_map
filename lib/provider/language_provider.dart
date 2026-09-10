@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_localization/flutter_localization.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -11,6 +13,14 @@ class LanguageProvider extends ChangeNotifier {
 
   LanguageProvider() {
     _loadSavedLanguage();
+  }
+  StreamSubscription? _memberSubscription;
+
+  void clearData() {
+    _memberSubscription?.cancel();
+    _memberSubscription = null;
+    // အခြား Member Data များကိုပါ Reset လုပ်ပါ
+    notifyListeners();
   }
 
   Future<void> _loadSavedLanguage() async {

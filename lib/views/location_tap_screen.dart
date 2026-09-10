@@ -156,7 +156,10 @@ class _LocationTapScreenState extends State<LocationTapScreen> {
           // Driving duration in seconds
           final double driveSeconds = (shortestRoute['duration'] as num)
               .toDouble();
-          final String driveDurationStr = _formatDuration(driveSeconds);
+          final double realisticDriveSeconds = driveSeconds * 3;
+          final String driveDurationStr = _formatDuration(
+            realisticDriveSeconds,
+          );
 
           // Route coordinates for Polyline
           final List geometry = shortestRoute['geometry']['coordinates'];
@@ -187,7 +190,7 @@ class _LocationTapScreenState extends State<LocationTapScreen> {
 
               // Walking Duration Realistic ဖြစ်အောင် Multiplier မြှောက်ခြင်း
               // (မိတ်ဆွေသုံးထားတဲ့ * 3 အဆ ကိန်းဂဏန်းအတိုင်း ထားပေးထားပါတယ်)
-              final double realisticWalkSeconds = walkSeconds * 3;
+              final double realisticWalkSeconds = walkSeconds * 9;
               walkDurationStr = _formatDuration(realisticWalkSeconds);
             }
           }
@@ -406,10 +409,11 @@ class _LocationTapScreenState extends State<LocationTapScreen> {
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
-                              const Icon(
-                                Icons.my_location,
-                                color: Colors.blue,
-                                size: 35.0,
+                              Image.asset(
+                                'assets/logo/app_logo_no_bk.png',
+                                width: 46.w,
+                                height: 46.h,
+                                fit: BoxFit.contain,
                               ),
                             ],
                           ),
@@ -459,10 +463,10 @@ class _LocationTapScreenState extends State<LocationTapScreen> {
                             focusNode: _searchFocusNode,
                             textInputAction: TextInputAction.search,
                             decoration: InputDecoration(
-                              hintText: 'Search here or tap on map',
+                              hintText: 'Search here ',
                               hintStyle: TextStyle(
                                 color: Colors.grey.shade600,
-                                fontSize: 14.sp,
+                                fontSize: 16.sp,
                               ),
                               prefixIcon: _isSearching
                                   ? const Padding(
@@ -472,9 +476,11 @@ class _LocationTapScreenState extends State<LocationTapScreen> {
                                       ),
                                     )
                                   : IconButton(
-                                      icon: const Icon(
-                                        Icons.search,
-                                        color: Colors.redAccent,
+                                      icon: Image.asset(
+                                        'assets/logo/app_logo_no_bk.png',
+                                        width: 32.w,
+                                        height: 32.h,
+                                        fit: BoxFit.contain,
                                       ),
                                       onPressed: () => _searchLocation(
                                         _searchController.text,
@@ -531,9 +537,9 @@ class _LocationTapScreenState extends State<LocationTapScreen> {
                                     style: TextStyle(fontSize: 14.sp),
                                   ),
                                   trailing: IconButton(
-                                    icon: const Icon(
+                                    icon: Icon(
                                       Icons.close,
-                                      size: 16,
+                                      size: 16.r,
                                       color: Colors.grey,
                                     ),
                                     onPressed: () => _deleteHistoryItem(item),
@@ -637,7 +643,12 @@ class _LocationTapScreenState extends State<LocationTapScreen> {
         child: FloatingActionButton(
           onPressed: () => _animatedMoveToCurrentLocation(myLocation),
           backgroundColor: Theme.of(context).primaryColor,
-          child: const Icon(Icons.my_location, color: Colors.white),
+          child: Image.asset(
+            'assets/logo/app_logo_no_bk.png',
+            width: 42.w,
+            height: 42.h,
+            color: Colors.white,
+          ),
         ),
       ),
     );

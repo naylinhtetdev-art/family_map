@@ -16,6 +16,9 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+final GlobalKey<ScaffoldMessengerState> rootScaffoldMessengerKey =
+    GlobalKey<ScaffoldMessengerState>();
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await FlutterLocalization.instance.ensureInitialized();
@@ -101,6 +104,7 @@ class MyApp extends StatelessWidget {
                   onSurface: AppColors.darkTextPrimary,
                 ),
               ),
+              scaffoldMessengerKey: rootScaffoldMessengerKey,
               home: const LandingPage(),
             );
           },

@@ -470,14 +470,14 @@ class _MemberTapScreenState extends State<MemberTapScreen> {
 
                     if (_selectedMember != null)
                       Positioned(
-                        bottom: 20.h,
-                        left: 16.w,
+                        bottom: 10.h,
+                        left: 10.w,
                         right: 80.w,
                         child: Container(
-                          padding: EdgeInsets.all(14.r),
+                          padding: EdgeInsets.all(10.r),
                           decoration: BoxDecoration(
                             color: Theme.of(context).cardColor,
-                            borderRadius: BorderRadius.circular(16.r),
+                            borderRadius: BorderRadius.circular(10.r),
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.black.withOpacity(0.15),
@@ -686,7 +686,9 @@ class _MemberTapScreenState extends State<MemberTapScreen> {
                                 if (error != null) {
                                   _showSnackBar(error);
                                 } else {
-                                  _showSnackBar('Request sent to $email');
+                                  _showSnackBar(
+                                    'Request sent to $email successfully',
+                                  );
                                   Navigator.pop(context);
                                 }
                               }

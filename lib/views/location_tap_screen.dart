@@ -100,72 +100,123 @@ class _LocationTapScreenState extends State<LocationTapScreen> {
 
   // OSRM API မှတစ်ဆင့် Route (လမ်းကြောင်း)၊ Distance & Durations ရယူခြင်း
   Future<void> _fetchRouteDetails(LatLng start, LatLng end) async {
+    // Start သို့မဟုတ် End Point တွေ LatLng (0.0, 0.0) ဖြစ်နေပါက ရပ်တန့်ရန်
+    if ((start.latitude == 0.0 && start.longitude == 0.0) ||
+        (end.latitude == 0.0 && end.longitude == 0.0)) {
+      if (mounted) _showSnackBar('Invalid start or end coordinates');
+      return;
+    }
+
     setState(() {
       _isLoadingRoute = true;
     });
 
     try {
-      // 1. Driving Route API
+      // 1. Driving Route API URL (alternatives=true ထည့်သွင်းထားသည်)
       final driveUrl = Uri.parse(
         'https://router.project-osrm.org/route/v1/driving/'
         '${start.longitude},${start.latitude};${end.longitude},${end.latitude}'
-        '?overview=full&geometries=geojson',
+        '?overview=full&geometries=geojson&alternatives=true',
       );
 
-      // 2. Walking Route API
+      // 2. Walking Route API URL (alternatives=true ထည့်သွင်းထားသည်)
       final walkUrl = Uri.parse(
         'https://router.project-osrm.org/route/v1/walking/'
         '${start.longitude},${start.latitude};${end.longitude},${end.latitude}'
-        '?overview=false',
+        '?overview=false&alternatives=true',
       );
 
-      final driveRes = await http.get(driveUrl);
-      final walkRes = await http.get(walkUrl);
+      // OSRM Server Request မပိတ်စေရန် Custom User-Agent Header
+      final headers = {
+        'User-Agent': 'FamilyMapApp/1.0 (com.naylinhtet.family_map)',
+      };
+
+      final driveRes = await http.get(driveUrl, headers: headers);
+      final walkRes = await http.get(walkUrl, headers: headers);
 
       if (driveRes.statusCode == 200) {
         final driveData = json.decode(driveRes.body);
-        if (driveData['routes'] != null && driveData['routes'].isNotEmpty) {
-          final route = driveData['routes'][0];
+        final List driveRoutes = driveData['routes'] ?? [];
 
-          // Distance in meters to Km
-          final double distanceMeters = (route['distance'] as num).toDouble();
-          final double distanceKm = distanceMeters / 1000;
-
-          // Driving duration in seconds
-          final double driveSeconds = (route['duration'] as num).toDouble();
-          final String driveDurationStr = _formatDuration(driveSeconds);
-
-          // Route coordinates for Polyline
-          final List geometry = route['geometry']['coordinates'];
-          final List<LatLng> points = geometry.map((coord) {
-            return LatLng(coord[1].toDouble(), coord[0].toDouble());
-          }).toList();
-
-          // Walking duration
-          String walkDurationStr = 'N/A';
-          if (walkRes.statusCode == 200) {
-            final walkData = json.decode(walkRes.body);
-            if (walkData['routes'] != null && walkData['routes'].isNotEmpty) {
-              final double walkSeconds =
-                  (walkData['routes'][0]['duration'] as num).toDouble();
-              walkDurationStr = _formatDuration(walkSeconds);
+        if (driveRoutes.isNotEmpty) {
+          // --- အနီးဆုံး (Distance အတိုဆုံး) Driving Route ကို Auto ရွေးချယ်ခြင်း ---
+          var shortestRoute = driveRoutes[0];
+          for (var route in driveRoutes) {
+            if ((route['distance'] as num) <
+                (shortestRoute['distance'] as num)) {
+              shortestRoute = route;
             }
           }
 
-          setState(() {
-            _routePoints = points;
-            _distanceInKm = distanceKm;
-            _drivingDuration = driveDurationStr;
-            _walkingDuration = walkDurationStr;
-          });
+          // Distance in meters to Km
+          final double distanceMeters = (shortestRoute['distance'] as num)
+              .toDouble();
+          final double distanceKm = distanceMeters / 1000;
+
+          // Driving duration in seconds
+          final double driveSeconds = (shortestRoute['duration'] as num)
+              .toDouble();
+          final String driveDurationStr = _formatDuration(driveSeconds);
+
+          // Route coordinates for Polyline
+          final List geometry = shortestRoute['geometry']['coordinates'];
+          final List<LatLng> points = geometry.map((coord) {
+            return LatLng(
+              (coord[1] as num).toDouble(),
+              (coord[0] as num).toDouble(),
+            );
+          }).toList();
+
+          // --- အနီးဆုံး Walking Route ကို Auto ရွေးချယ်ခြင်း ---
+          String walkDurationStr = 'N/A';
+          if (walkRes.statusCode == 200) {
+            final walkData = json.decode(walkRes.body);
+            final List walkRoutes = walkData['routes'] ?? [];
+
+            if (walkRoutes.isNotEmpty) {
+              var shortestWalkRoute = walkRoutes[0];
+              for (var walkRoute in walkRoutes) {
+                if ((walkRoute['distance'] as num) <
+                    (shortestWalkRoute['distance'] as num)) {
+                  shortestWalkRoute = walkRoute;
+                }
+              }
+
+              final double walkSeconds = (shortestWalkRoute['duration'] as num)
+                  .toDouble();
+
+              // Walking Duration Realistic ဖြစ်အောင် Multiplier မြှောက်ခြင်း
+              // (မိတ်ဆွေသုံးထားတဲ့ * 3 အဆ ကိန်းဂဏန်းအတိုင်း ထားပေးထားပါတယ်)
+              final double realisticWalkSeconds = walkSeconds * 3;
+              walkDurationStr = _formatDuration(realisticWalkSeconds);
+            }
+          }
+
+          // Widget Tree ထဲမှာ ရှိနေသေးမှသာ setState ခေါ်ရန်
+          if (mounted) {
+            setState(() {
+              _routePoints = points;
+              _distanceInKm = distanceKm;
+              _drivingDuration = driveDurationStr;
+              _walkingDuration = walkDurationStr;
+            });
+          }
+        }
+      } else {
+        if (mounted) {
+          _showSnackBar('Failed to get route (${driveRes.statusCode})');
         }
       }
     } catch (e) {
-      _showSnackBar('Error fetching route');
+      if (mounted) {
+        _showSnackBar('Error fetching route');
+      }
     } finally {
-      setState(() {
-        _isLoadingRoute = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoadingRoute = false;
+        });
+      }
     }
   }
 
@@ -503,14 +554,14 @@ class _LocationTapScreenState extends State<LocationTapScreen> {
                 // ၃။ အောက်ခြေရှိ Route Info Card (Distance, Driving Time, Walking Time)
                 if (_destinationLocation != null && !_showHistory)
                   Positioned(
-                    bottom: 20.h,
-                    left: 16.w,
-                    right: 16.w,
+                    bottom: 10.h,
+                    left: 10.w,
+                    right: 10.w,
                     child: Container(
-                      padding: EdgeInsets.all(16.r),
+                      padding: EdgeInsets.all(8.r),
                       decoration: BoxDecoration(
                         color: Theme.of(context).cardColor,
-                        borderRadius: BorderRadius.circular(20.r),
+                        borderRadius: BorderRadius.circular(10.r),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withOpacity(0.15),

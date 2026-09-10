@@ -90,15 +90,17 @@ class MemberProvider with ChangeNotifier {
       final targetUserDoc = targetUserQuery.docs.first;
       final targetUid = targetUserDoc.id;
 
+      // 2. Already shared ဖြစ်ပြီးသားလား စစ်ဆေးခြင်း
       final senderDoc = await _firestore
           .collection('users')
           .doc(senderUid)
           .get();
-      final List<dynamic> sharedMembers =
-          senderDoc.data()?['sharedMembers'] ?? [];
-
-      if (sharedMembers.contains(targetUid)) {
-        return "This member is already in your list";
+      if (senderDoc.exists) {
+        final List<dynamic> sharedMembers =
+            senderDoc.data()?['sharedMembers'] ?? [];
+        if (sharedMembers.contains(targetUid)) {
+          return "This member is already in your family list";
+        }
       }
 
       final existingReq = await _firestore

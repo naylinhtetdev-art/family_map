@@ -1,5 +1,6 @@
-# Uncomment the next line to define a global platform for your project
-# platform :ios, '13.0'
+# Keep CocoaPods and Flutter's generated Swift package on a platform supported
+# by the Firebase iOS SDK used by this app.
+platform :ios, '15.0'
 
 target 'Runner' do
   # Comment the next line if you don't want to use dynamic frameworks

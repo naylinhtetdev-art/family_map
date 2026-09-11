@@ -351,37 +351,42 @@ class _MemberTapScreenState extends State<MemberTapScreen> {
                         alignment: Alignment.topLeft,
                         child: Padding(
                           padding: EdgeInsets.symmetric(
-                            horizontal: 12.w,
+                            horizontal: 0.w,
                             vertical: 10.h,
                           ),
                           child: SingleChildScrollView(
                             scrollDirection: Axis.horizontal,
+                            padding: EdgeInsets.only(left: 8.w),
                             child: Row(
                               children: [
                                 ActionChip(
-                                  avatar: const Icon(
-                                    Icons.person,
-                                    color: Colors.blue,
-                                    size: 18,
+                                  avatar: Image.asset(
+                                    'assets/logo/app_logo_no_bk.png',
+                                    color: Colors.white,
+                                    width: 32.w,
+                                    height: 32.h,
                                   ),
-                                  label: const Text('You'),
-                                  backgroundColor: Colors.white,
+                                  label: Text(
+                                    'You',
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                  backgroundColor: AppColors.primary,
                                   elevation: 2,
                                   onPressed: () =>
                                       _animatedMoveToCurrentLocation(
                                         myLocation,
                                       ),
                                 ),
-                                SizedBox(width: 8.w),
+                                SizedBox(width: 4.w),
                                 if (members.isEmpty)
                                   Container(
                                     padding: EdgeInsets.symmetric(
-                                      horizontal: 12.w,
+                                      horizontal: 10.w,
                                       vertical: 6.h,
                                     ),
                                     decoration: BoxDecoration(
                                       color: Colors.white,
-                                      borderRadius: BorderRadius.circular(20.r),
+                                      borderRadius: BorderRadius.circular(10.r),
                                     ),
                                     child: const Text(
                                       'No members added yet',
@@ -390,9 +395,13 @@ class _MemberTapScreenState extends State<MemberTapScreen> {
                                   )
                                 else
                                   ...members.map((m) {
-                                    final name = m.name.isNotEmpty
+                                    final rawName = m.name.isNotEmpty
                                         ? m.name
                                         : m.email.split('@')[0];
+
+                                    final name = rawName.length > 3
+                                        ? rawName.substring(0, 3)
+                                        : rawName;
                                     final isSelected =
                                         _selectedMember?.uid == m.uid;
 
@@ -401,14 +410,14 @@ class _MemberTapScreenState extends State<MemberTapScreen> {
                                       child: Material(
                                         elevation: isSelected ? 4 : 2,
                                         borderRadius: BorderRadius.circular(
-                                          20.r,
+                                          10.r,
                                         ),
                                         color: isSelected
                                             ? Colors.purple.shade50
-                                            : Colors.white,
+                                            : Colors.blueGrey,
                                         child: InkWell(
                                           borderRadius: BorderRadius.circular(
-                                            20.r,
+                                            10.r,
                                           ),
                                           onTap: () => _fetchMemberRouteDetails(
                                             myLocation,
@@ -454,7 +463,7 @@ class _MemberTapScreenState extends State<MemberTapScreen> {
                                                   },
                                                   child: Icon(
                                                     Icons.cancel,
-                                                    color: Colors.grey.shade600,
+                                                    color: Colors.black,
                                                     size: 18.r,
                                                   ),
                                                 ),
@@ -640,13 +649,18 @@ class _MemberTapScreenState extends State<MemberTapScreen> {
               padding: EdgeInsets.only(
                 left: 20.w,
                 right: 20.w,
-                top: 20.h,
+                top: 10.h,
                 bottom: MediaQuery.of(context).viewInsets.bottom + 20.h,
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Image.asset(
+                    'assets/logo/app_logo_no_bk.png',
+                    width: 50.w,
+                    height: 50.h,
+                  ),
                   Text(
                     'Add Family Member',
                     style: TextStyle(

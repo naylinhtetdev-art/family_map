@@ -55,13 +55,6 @@ class _LocationTapScreenState extends State<LocationTapScreen> {
         _showHistory = _searchFocusNode.hasFocus;
       });
     });
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final user = context.read<AuthProvider>().user;
-      if (user != null) {
-        context.read<LocationProvider>().startLocationTracking(user.uid);
-      }
-    });
   }
 
   // SharedPreferences မှ Search History ယူခြင်း
@@ -100,7 +93,6 @@ class _LocationTapScreenState extends State<LocationTapScreen> {
 
   // OSRM API မှတစ်ဆင့် Route (လမ်းကြောင်း)၊ Distance & Durations ရယူခြင်း
   Future<void> _fetchRouteDetails(LatLng start, LatLng end) async {
-    // Start သို့မဟုတ် End Point တွေ LatLng (0.0, 0.0) ဖြစ်နေပါက ရပ်တန့်ရန်
     if ((start.latitude == 0.0 && start.longitude == 0.0) ||
         (end.latitude == 0.0 && end.longitude == 0.0)) {
       if (mounted) _showSnackBar('Invalid start or end coordinates');
@@ -112,21 +104,18 @@ class _LocationTapScreenState extends State<LocationTapScreen> {
     });
 
     try {
-      // 1. Driving Route API URL (alternatives=true ထည့်သွင်းထားသည်)
       final driveUrl = Uri.parse(
         'https://router.project-osrm.org/route/v1/driving/'
         '${start.longitude},${start.latitude};${end.longitude},${end.latitude}'
         '?overview=full&geometries=geojson&alternatives=true',
       );
 
-      // 2. Walking Route API URL (alternatives=true ထည့်သွင်းထားသည်)
       final walkUrl = Uri.parse(
         'https://router.project-osrm.org/route/v1/walking/'
         '${start.longitude},${start.latitude};${end.longitude},${end.latitude}'
         '?overview=false&alternatives=true',
       );
 
-      // OSRM Server Request မပိတ်စေရန် Custom User-Agent Header
       final headers = {
         'User-Agent': 'FamilyMapApp/1.0 (com.naylinhtet.family_map)',
       };
@@ -139,7 +128,6 @@ class _LocationTapScreenState extends State<LocationTapScreen> {
         final List driveRoutes = driveData['routes'] ?? [];
 
         if (driveRoutes.isNotEmpty) {
-          // --- အနီးဆုံး (Distance အတိုဆုံး) Driving Route ကို Auto ရွေးချယ်ခြင်း ---
           var shortestRoute = driveRoutes[0];
           for (var route in driveRoutes) {
             if ((route['distance'] as num) <
@@ -148,12 +136,10 @@ class _LocationTapScreenState extends State<LocationTapScreen> {
             }
           }
 
-          // Distance in meters to Km
           final double distanceMeters = (shortestRoute['distance'] as num)
               .toDouble();
           final double distanceKm = distanceMeters / 1000;
 
-          // Driving duration in seconds
           final double driveSeconds = (shortestRoute['duration'] as num)
               .toDouble();
           final double realisticDriveSeconds = driveSeconds * 3;
@@ -161,7 +147,6 @@ class _LocationTapScreenState extends State<LocationTapScreen> {
             realisticDriveSeconds,
           );
 
-          // Route coordinates for Polyline
           final List geometry = shortestRoute['geometry']['coordinates'];
           final List<LatLng> points = geometry.map((coord) {
             return LatLng(
@@ -170,7 +155,6 @@ class _LocationTapScreenState extends State<LocationTapScreen> {
             );
           }).toList();
 
-          // --- အနီးဆုံး Walking Route ကို Auto ရွေးချယ်ခြင်း ---
           String walkDurationStr = 'N/A';
           if (walkRes.statusCode == 200) {
             final walkData = json.decode(walkRes.body);
@@ -188,14 +172,11 @@ class _LocationTapScreenState extends State<LocationTapScreen> {
               final double walkSeconds = (shortestWalkRoute['duration'] as num)
                   .toDouble();
 
-              // Walking Duration Realistic ဖြစ်အောင် Multiplier မြှောက်ခြင်း
-              // (မိတ်ဆွေသုံးထားတဲ့ * 3 အဆ ကိန်းဂဏန်းအတိုင်း ထားပေးထားပါတယ်)
               final double realisticWalkSeconds = walkSeconds * 9;
               walkDurationStr = _formatDuration(realisticWalkSeconds);
             }
           }
 
-          // Widget Tree ထဲမှာ ရှိနေသေးမှသာ setState ခေါ်ရန်
           if (mounted) {
             setState(() {
               _routePoints = points;
@@ -223,7 +204,6 @@ class _LocationTapScreenState extends State<LocationTapScreen> {
     }
   }
 
-  // ကြာချိန် စက္ကန့်မှ မိနစ်/နာရီ သို့ ပြောင်းလဲပေးသည့် Helper
   String _formatDuration(double seconds) {
     final int minutes = (seconds / 60).round();
     if (minutes < 60) {
@@ -235,7 +215,6 @@ class _LocationTapScreenState extends State<LocationTapScreen> {
     }
   }
 
-  // Search Bar မှ ရှာဖွေခြင်း
   Future<void> _searchLocation(String query, LatLng currentLocation) async {
     if (query.trim().isEmpty) return;
 
@@ -272,8 +251,6 @@ class _LocationTapScreenState extends State<LocationTapScreen> {
           });
 
           await _saveSearchQuery(query);
-
-          // လမ်းကြောင်းနှင့် ကြာချိန်များ ယူမည်
           await _fetchRouteDetails(currentLocation, destination);
 
           _mapController.move(destination, 14.5);
@@ -290,7 +267,6 @@ class _LocationTapScreenState extends State<LocationTapScreen> {
     }
   }
 
-  // Map ပေါ်တွင် Tap (နှိပ်) လိုက်သည့်အခါ လမ်းကြောင်းဆွဲပေးခြင်း
   Future<void> _handleMapTap(LatLng tappedPoint, LatLng currentLocation) async {
     _searchFocusNode.unfocus();
     setState(() {
@@ -341,301 +317,310 @@ class _LocationTapScreenState extends State<LocationTapScreen> {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: currentPos == null
-          ? const Center(child: CircularProgressIndicator())
-          : Stack(
-              children: [
-                // ၁။ Map View
-                FlutterMap(
-                  mapController: _mapController,
-                  options: MapOptions(
-                    initialCenter: myLocation,
-                    initialZoom: 15.0,
-                    onTap: (tapPosition, point) =>
-                        _handleMapTap(point, myLocation),
-                  ),
-                  children: [
-                    TileLayer(
-                      urlTemplate:
-                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                      userAgentPackageName: 'com.naylinhtet.family_map',
-                      tileProvider: NetworkTileProvider(
-                        headers: Map<String, String>.from({
-                          'User-Agent':
-                              'MyCustomFamilyApp/1.0 (naylinhtet.dev@gmail.com)',
-                        }),
-                      ),
-                    ),
-
-                    // Route Polyline (လမ်းကြောင်း)
-                    if (_routePoints.isNotEmpty)
-                      PolylineLayer(
-                        polylines: [
-                          Polyline(
-                            points: _routePoints,
-                            strokeWidth: 4.5,
-                            color: Colors.blueAccent,
-                          ),
-                        ],
-                      ),
-
-                    MarkerLayer(
-                      markers: [
-                        // မိမိ တည်နေရာ Marker (အမည် Tag ပါဝင်သည်)
-                        Marker(
-                          point: myLocation,
-                          width: 80.w,
-                          height: 80.h,
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Container(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 6.w,
-                                  vertical: 2.h,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.blueAccent,
-                                  borderRadius: BorderRadius.circular(8.r),
-                                ),
-                                child: Text(
-                                  myName,
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 10.sp,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              Image.asset(
-                                'assets/logo/app_logo_no_bk.png',
-                                width: 46.w,
-                                height: 46.h,
-                                fit: BoxFit.contain,
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        // Destination Marker
-                        if (_destinationLocation != null)
-                          Marker(
-                            point: _destinationLocation!,
-                            width: 80,
-                            height: 80,
-                            child: const Icon(
-                              Icons.location_on,
-                              color: Colors.red,
-                              size: 45.0,
-                            ),
-                          ),
-                      ],
+      body: Stack(
+        children: [
+          // ၁။ Map View
+          FlutterMap(
+            mapController: _mapController,
+            options: MapOptions(
+              initialCenter: myLocation,
+              initialZoom: 15.0,
+              onTap: (tapPosition, point) => _handleMapTap(point, myLocation),
+            ),
+            children: [
+              TileLayer(
+                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                userAgentPackageName: 'com.naylinhtet.family_map',
+                tileProvider: NetworkTileProvider(
+                  headers: Map<String, String>.from({
+                    'User-Agent':
+                        'MyCustomFamilyApp/1.0 (naylinhtet.dev@gmail.com)',
+                  }),
+                ),
+              ),
+              if (_routePoints.isNotEmpty)
+                PolylineLayer(
+                  polylines: [
+                    Polyline(
+                      points: _routePoints,
+                      strokeWidth: 4.5,
+                      color: Colors.blueAccent,
                     ),
                   ],
                 ),
-
-                // ၂။ Search Bar & History List
-                SafeArea(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 16.w,
-                      vertical: 10.h,
-                    ),
+              MarkerLayer(
+                markers: [
+                  Marker(
+                    point: myLocation,
+                    width: 80.w,
+                    height: 80.h,
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Container(
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).cardColor,
-                            borderRadius: BorderRadius.circular(30.r),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.15),
-                                blurRadius: 8,
-                                offset: const Offset(0, 3),
-                              ),
-                            ],
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 6.w,
+                            vertical: 2.h,
                           ),
-                          child: TextField(
-                            controller: _searchController,
-                            focusNode: _searchFocusNode,
-                            textInputAction: TextInputAction.search,
-                            decoration: InputDecoration(
-                              hintText: 'Search here ',
-                              hintStyle: TextStyle(
-                                color: Colors.grey.shade600,
-                                fontSize: 16.sp,
-                              ),
-                              prefixIcon: _isSearching
-                                  ? const Padding(
-                                      padding: EdgeInsets.all(12.0),
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                      ),
-                                    )
-                                  : IconButton(
-                                      icon: Image.asset(
-                                        'assets/logo/app_logo_no_bk.png',
-                                        width: 32.w,
-                                        height: 32.h,
-                                        fit: BoxFit.contain,
-                                      ),
-                                      onPressed: () => _searchLocation(
-                                        _searchController.text,
-                                        myLocation,
-                                      ),
-                                    ),
-                              suffixIcon: IconButton(
-                                icon: const Icon(
-                                  Icons.clear,
-                                  color: Colors.grey,
-                                ),
-                                onPressed: _clearSelection,
-                              ),
-                              border: InputBorder.none,
-                              contentPadding: EdgeInsets.symmetric(
-                                vertical: 14.h,
-                              ),
+                          decoration: BoxDecoration(
+                            color: Colors.blueAccent,
+                            borderRadius: BorderRadius.circular(8.r),
+                          ),
+                          child: Text(
+                            myName,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10.sp,
+                              fontWeight: FontWeight.bold,
                             ),
-                            onSubmitted: (value) =>
-                                _searchLocation(value, myLocation),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
-
-                        // Search History Dropdown
-                        if (_showHistory && _searchHistory.isNotEmpty)
-                          Container(
-                            margin: EdgeInsets.only(top: 6.h),
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).cardColor,
-                              borderRadius: BorderRadius.circular(16.r),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.12),
-                                  blurRadius: 6,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            constraints: BoxConstraints(maxHeight: 200.h),
-                            child: ListView.builder(
-                              shrinkWrap: true,
-                              itemCount: _searchHistory.length,
-                              itemBuilder: (context, index) {
-                                final item = _searchHistory[index];
-                                return ListTile(
-                                  dense: true,
-                                  leading: const Icon(
-                                    Icons.history,
-                                    size: 18,
-                                    color: Colors.grey,
-                                  ),
-                                  title: Text(
-                                    item,
-                                    style: TextStyle(fontSize: 14.sp),
-                                  ),
-                                  trailing: IconButton(
-                                    icon: Icon(
-                                      Icons.close,
-                                      size: 16.r,
-                                      color: Colors.grey,
-                                    ),
-                                    onPressed: () => _deleteHistoryItem(item),
-                                  ),
-                                  onTap: () {
-                                    _searchController.text = item;
-                                    _searchLocation(item, myLocation);
-                                  },
-                                );
-                              },
-                            ),
-                          ),
+                        Image.asset(
+                          'assets/logo/app_logo_no_bk.png',
+                          width: 46.w,
+                          height: 46.h,
+                          fit: BoxFit.contain,
+                        ),
                       ],
                     ),
                   ),
-                ),
+                  if (_destinationLocation != null)
+                    Marker(
+                      point: _destinationLocation!,
+                      width: 80,
+                      height: 80,
+                      child: const Icon(
+                        Icons.location_on,
+                        color: Colors.red,
+                        size: 45.0,
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          ),
 
-                // ၃။ အောက်ခြေရှိ Route Info Card (Distance, Driving Time, Walking Time)
-                if (_destinationLocation != null && !_showHistory)
-                  Positioned(
-                    bottom: 10.h,
-                    left: 10.w,
-                    right: 10.w,
-                    child: Container(
-                      padding: EdgeInsets.all(8.r),
+          // ၂။ Position ရယူနေဆဲ ဖြစ်ပါက Top Banner ပြရန်
+          // if (currentPos == null)
+          //   Positioned(
+          //     top: 110.h,
+          //     left: 20.w,
+          //     right: 20.w,
+          //     child: Container(
+          //       padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 16.w),
+          //       decoration: BoxDecoration(
+          //         color: Colors.grey,
+          //         borderRadius: BorderRadius.circular(20.r),
+          //       ),
+          //       child: const Row(
+          //         mainAxisAlignment: MainAxisAlignment.center,
+          //         children: [
+          //           SizedBox(
+          //             width: 16,
+          //             height: 16,
+          //             child: CircularProgressIndicator(
+          //               strokeWidth: 2,
+          //               color: Colors.white,
+          //             ),
+          //           ),
+          //           SizedBox(width: 10),
+          //           Text(
+          //             'Fetching GPS location...',
+          //             style: TextStyle(color: Colors.white),
+          //           ),
+          //         ],
+          //       ),
+          //     ),
+          //   ),
+
+          // ၃။ Search Bar & History List
+          SafeArea(
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).cardColor,
+                      borderRadius: BorderRadius.circular(30.r),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.15),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: TextField(
+                      controller: _searchController,
+                      focusNode: _searchFocusNode,
+                      textInputAction: TextInputAction.search,
+                      decoration: InputDecoration(
+                        hintText: 'Search here ',
+                        hintStyle: TextStyle(
+                          color: Colors.grey.shade600,
+                          fontSize: 16.sp,
+                        ),
+                        prefixIcon: _isSearching
+                            ? const Padding(
+                                padding: EdgeInsets.all(12.0),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : IconButton(
+                                icon: Image.asset(
+                                  'assets/logo/app_logo_no_bk.png',
+                                  width: 32.w,
+                                  height: 32.h,
+                                  fit: BoxFit.contain,
+                                ),
+                                onPressed: () => _searchLocation(
+                                  _searchController.text,
+                                  myLocation,
+                                ),
+                              ),
+                        suffixIcon: IconButton(
+                          icon: const Icon(Icons.clear, color: Colors.grey),
+                          onPressed: _clearSelection,
+                        ),
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(vertical: 14.h),
+                      ),
+                      onSubmitted: (value) =>
+                          _searchLocation(value, myLocation),
+                    ),
+                  ),
+
+                  // Search History Dropdown
+                  if (_showHistory && _searchHistory.isNotEmpty)
+                    Container(
+                      margin: EdgeInsets.only(top: 6.h),
                       decoration: BoxDecoration(
                         color: Theme.of(context).cardColor,
-                        borderRadius: BorderRadius.circular(10.r),
+                        borderRadius: BorderRadius.circular(16.r),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.15),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
+                            color: Colors.black.withOpacity(0.12),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
                           ),
                         ],
                       ),
-                      child: _isLoadingRoute
-                          ? const Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                CircularProgressIndicator(),
-                                SizedBox(width: 12),
-                                Text('Calculating route...'),
-                              ],
-                            )
-                          : Column(
-                              mainAxisSize: MainAxisSize.min,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  _destinationPlaceName ?? 'Selected Location',
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 15.sp,
-                                  ),
-                                ),
-                                SizedBox(height: 12.h),
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceAround,
-                                  children: [
-                                    // Distance Info
-                                    _buildInfoItem(
-                                      icon: Icons.straighten,
-                                      iconColor: Colors.blue,
-                                      title: 'Distance',
-                                      value: _distanceInKm != null
-                                          ? '${_distanceInKm!.toStringAsFixed(1)} km'
-                                          : 'N/A',
-                                    ),
-
-                                    // Driving Duration Info
-                                    _buildInfoItem(
-                                      icon: Icons.directions_car,
-                                      iconColor: Colors.amber.shade800,
-                                      title: 'Drive',
-                                      value: _drivingDuration ?? 'N/A',
-                                    ),
-
-                                    // Walking Duration Info
-                                    _buildInfoItem(
-                                      icon: Icons.directions_walk,
-                                      iconColor: Colors.green,
-                                      title: 'Walk',
-                                      value: _walkingDuration ?? 'N/A',
-                                    ),
-                                  ],
-                                ),
-                              ],
+                      constraints: BoxConstraints(maxHeight: 200.h),
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: _searchHistory.length,
+                        itemBuilder: (context, index) {
+                          final item = _searchHistory[index];
+                          return ListTile(
+                            dense: true,
+                            leading: const Icon(
+                              Icons.history,
+                              size: 18,
+                              color: Colors.grey,
                             ),
+                            title: Text(
+                              item,
+                              style: TextStyle(fontSize: 14.sp),
+                            ),
+                            trailing: IconButton(
+                              icon: Icon(
+                                Icons.close,
+                                size: 16.r,
+                                color: Colors.grey,
+                              ),
+                              onPressed: () => _deleteHistoryItem(item),
+                            ),
+                            onTap: () {
+                              _searchController.text = item;
+                              _searchLocation(item, myLocation);
+                            },
+                          );
+                        },
+                      ),
                     ),
-                  ),
-              ],
+                ],
+              ),
             ),
+          ),
+
+          // ၄။ အောက်ခြေရှိ Route Info Card (Distance, Driving Time, Walking Time)
+          if (_destinationLocation != null && !_showHistory)
+            Positioned(
+              bottom: 10.h,
+              left: 10.w,
+              right: 10.w,
+              child: Container(
+                padding: EdgeInsets.all(8.r),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).cardColor,
+                  borderRadius: BorderRadius.circular(10.r),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.15),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: _isLoadingRoute
+                    ? const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          CircularProgressIndicator(),
+                          SizedBox(width: 12),
+                          Text('Calculating route...'),
+                        ],
+                      )
+                    : Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _destinationPlaceName ?? 'Selected Location',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15.sp,
+                            ),
+                          ),
+                          SizedBox(height: 12.h),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: [
+                              _buildInfoItem(
+                                icon: Icons.straighten,
+                                iconColor: Colors.blue,
+                                title: 'Distance',
+                                value: _distanceInKm != null
+                                    ? '${_distanceInKm!.toStringAsFixed(1)} km'
+                                    : 'N/A',
+                              ),
+                              _buildInfoItem(
+                                icon: Icons.directions_car,
+                                iconColor: Colors.amber.shade800,
+                                title: 'Drive',
+                                value: _drivingDuration ?? 'N/A',
+                              ),
+                              _buildInfoItem(
+                                icon: Icons.directions_walk,
+                                iconColor: Colors.green,
+                                title: 'Walk',
+                                value: _walkingDuration ?? 'N/A',
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+              ),
+            ),
+        ],
+      ),
       floatingActionButton: Padding(
         padding: EdgeInsets.only(
           bottom: _destinationLocation != null ? 120.h : 0,

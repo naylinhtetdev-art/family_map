@@ -66,5 +66,19 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<!-- Location Permissions (ဒီနေရာတွင် ဖြည့်စွက်ထားပါသည်) -->
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>This app needs access to your location to show your real-time position on the map.</string>
+    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+    <string>This app needs continuous location access to update your live location for family members even when the app is in the background or screen is locked.</string>
+    <key>NSLocationAlwaysUsageDescription</key>
+    <string>This app needs continuous location access to share your live location with your family.</string>
+
+    <!-- Background Modes (Screen ပိတ်ထားစဉ် Location ဆွဲယူရန်) -->
+    <key>UIBackgroundModes</key>
+    <array>
+        <string>location</string>
+        <string>fetch</string>
+    </array>
 </dict>
 </plist>

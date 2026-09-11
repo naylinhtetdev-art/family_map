@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:family_map/firebase_options.dart';
 import 'package:family_map/provider/auth_provider.dart';
 import 'package:family_map/provider/language_provider.dart';
@@ -21,11 +22,19 @@ final GlobalKey<ScaffoldMessengerState> rootScaffoldMessengerKey =
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await FlutterLocalization.instance.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  final prefs = await SharedPreferences.getInstance();
+  final results = await Future.wait([
+    Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform),
+    FlutterLocalization.instance.ensureInitialized(),
+    SharedPreferences.getInstance(),
+  ]);
+  final prefs = results[2] as SharedPreferences;
   final savedLanguageCode = prefs.getString('selected_language') ?? 'en';
 
+  // Firestore Offline Cache ဖွင့်ခြင်း
+  FirebaseFirestore.instance.settings = const Settings(
+    persistenceEnabled: true,
+    cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
+  );
   FlutterLocalization.instance.init(
     mapLocales: [
       const MapLocale('en', AppLocale.EN),
@@ -125,7 +134,7 @@ class LandingPage extends StatelessWidget {
     } else if (auth.signedIn && auth.isRemembered) {
       return const HomeView();
     } else if (auth.signedIn) {
-      const LoginView();
+      return const LoginView();
     } else if (auth.isFirstTimeUser) {
       return Scaffold(
         body: Stack(

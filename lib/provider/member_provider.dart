@@ -1,8 +1,8 @@
 import 'dart:async';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:family_map/model/member_model.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 
 class MemberProvider with ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -20,53 +20,76 @@ class MemberProvider with ChangeNotifier {
   void clearData() {
     _memberSubscription?.cancel();
     _memberSubscription = null;
-    // အခြား Member Data များကိုပါ Reset လုပ်ပါ
     notifyListeners();
+  }
+
+  // -------------------------------------------------------------
+  // Foreground Task & Location Tracking Setup
+  // -------------------------------------------------------------
+
+  /// Background Service Init ပြုလုပ်ခြင်း (App စတင်ချိန်တွင် ခေါ်ပေးရမည်)
+  void initForegroundTask() {
+    FlutterForegroundTask.init(
+      androidNotificationOptions: AndroidNotificationOptions(
+        channelId: 'family_map_location',
+        channelName: 'Location Tracking Service',
+        channelDescription: 'Used for live family location updates',
+        channelImportance: NotificationChannelImportance.DEFAULT,
+        priority: NotificationPriority.LOW,
+      ),
+      iosNotificationOptions: const IOSNotificationOptions(
+        showNotification: true,
+        playSound: false,
+      ),
+      foregroundTaskOptions: ForegroundTaskOptions(
+        eventAction: ForegroundTaskEventAction.nothing(),
+        autoRunOnBoot: false,
+        allowWakeLock: true,
+      ),
+    );
   }
 
   // -------------------------------------------------------------
   // Realtime Shared Members Stream
   // -------------------------------------------------------------
   Stream<List<MemberModel>> getSharedMembersStream(String currentUid) {
-    return _firestore.collection('users').doc(currentUid).snapshots().asyncExpand((
-      userDoc,
-    ) {
-      if (!userDoc.exists || userDoc.data() == null) {
-        return Stream.value([]);
-      }
+    return _firestore
+        .collection('users')
+        .doc(currentUid)
+        .snapshots()
+        .asyncExpand((userDoc) {
+          if (!userDoc.exists || userDoc.data() == null) {
+            return Stream.value([]);
+          }
 
-      final data = userDoc.data()!;
-      // 'sharedMembers' array ကို ဆွဲထုတ်ခြင်း
-      final List<dynamic> sharedUids = data['sharedMembers'] ?? [];
+          final data = userDoc.data()!;
+          final List<dynamic> sharedUids = data['sharedMembers'] ?? [];
 
-      if (sharedUids.isEmpty) {
-        return Stream.value([]);
-      }
+          if (sharedUids.isEmpty) {
+            return Stream.value([]);
+          }
 
-      // String List အဖြစ် ပြောင်းလဲခြင်း
-      final List<String> targetUids = sharedUids
-          .map((e) => e.toString())
-          .toList();
+          final List<String> targetUids = sharedUids
+              .map((e) => e.toString())
+              .toList();
 
-      // Firestore whereIn ဖြင့် Target Users Document များကို Stream Listen လုပ်ခြင်း
-      // (whereIn သည် အများဆုံး ၁၀ ခုအထိ ရသဖြင့် အခြေခံ ၁၀ ခုထိ Realtime Listen လုပ်ပါမည်)
-      final chunk = targetUids.length > 10
-          ? targetUids.sublist(0, 10)
-          : targetUids;
+          final chunk = targetUids.length > 10
+              ? targetUids.sublist(0, 10)
+              : targetUids;
 
-      return _firestore
-          .collection('users')
-          .where(FieldPath.documentId, whereIn: chunk)
-          .snapshots()
-          .map((querySnapshot) {
-            return querySnapshot.docs.map((doc) {
-              return MemberModel.fromMap(doc.data(), doc.id);
-            }).toList();
-          });
-    });
+          return _firestore
+              .collection('users')
+              .where(FieldPath.documentId, whereIn: chunk)
+              .snapshots()
+              .map((querySnapshot) {
+                return querySnapshot.docs.map((doc) {
+                  return MemberModel.fromMap(doc.data(), doc.id);
+                }).toList();
+              });
+        });
   }
 
-  // Pending Requests Stream (Profile Screen အတွက်)
+  // Pending Requests Stream
   Stream<QuerySnapshot> getPendingRequestsStream(String currentUid) {
     return _firestore
         .collection('requests')
@@ -101,7 +124,6 @@ class MemberProvider with ChangeNotifier {
       final targetUserDoc = targetUserQuery.docs.first;
       final targetUid = targetUserDoc.id;
 
-      // 2. Already shared ဖြစ်ပြီးသားလား စစ်ဆေးခြင်း
       final senderDoc = await _firestore
           .collection('users')
           .doc(senderUid)
@@ -153,7 +175,6 @@ class MemberProvider with ChangeNotifier {
         'status': 'accepted',
       });
 
-      // နှစ်ဖက်လုံး၏ sharedMembers Array ထဲသို့ arrayUnion ဖြင့် UID ထည့်ခြင်း
       await _firestore.collection('users').doc(senderUid).set({
         'sharedMembers': FieldValue.arrayUnion([receiverUid]),
       }, SetOptions(merge: true));

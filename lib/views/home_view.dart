@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:family_map/main.dart';
 import 'package:family_map/provider/auth_provider.dart';
 import 'package:family_map/provider/language_provider.dart';
@@ -5,6 +8,7 @@ import 'package:family_map/provider/location_provider.dart';
 import 'package:family_map/provider/member_provider.dart';
 import 'package:family_map/provider/theme_provider.dart';
 import 'package:family_map/utils/app_language.dart';
+import 'package:family_map/utils/connectivity_handler.dart';
 import 'package:family_map/utils/constants.dart';
 import 'package:family_map/views/location_tap_screen.dart';
 import 'package:family_map/views/member_tap_screen.dart';
@@ -21,18 +25,89 @@ class HomeView extends StatefulWidget {
   State<HomeView> createState() => _HomeViewState();
 }
 
-class _HomeViewState extends State<HomeView> {
+class _HomeViewState extends State<HomeView> with WidgetsBindingObserver {
   final PageController _pageController = PageController();
   int index = 0;
+  bool _isCheckingServices = false;
+  late StreamSubscription<List<ConnectivityResult>> _connectivitySubscription;
 
   final pages = const [
     LocationTapScreen(),
     MemberTapScreen(),
     ProfileTapScreen(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this); // Lifecycle listen စလုပ်မည်
+    //_checkGps();
+    // 2. Realtime Internet ပိတ်/ဖွင့် စောင့်ကြည့်မည့် Stream ကို ဤနေရာတွင် Listen လုပ်ပါ
+    _connectivitySubscription = Connectivity().onConnectivityChanged.listen((
+      List<ConnectivityResult> result,
+    ) {
+      if (result.contains(ConnectivityResult.none) && mounted) {
+        ConnectivityHandler.checkAndPromptInternet(context);
+      }
+    });
+
+    // Initial Screen Load တွင် GPS နှင့် Internet စစ်ဆေးခြင်း
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkServices();
+    });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      //_checkGps();
+      _checkServices();
+    }
+  }
+
+  // Future<void> _checkGps() async {
+  //   final user = context.read<AuthProvider>().user;
+  //   final isGpsOn = await context
+  //       .read<LocationProvider>()
+  //       .checkAndEnableLocationService(context);
+
+  //   if (isGpsOn && user != null && mounted) {
+  //     context.read<MemberProvider>().startLocationTracking(user.uid);
+  //   }
+  // }
+  Future<void> _checkServices() async {
+    if (!mounted || _isCheckingServices) return;
+    _isCheckingServices = true;
+
+    try {
+      // 1. Internet ရှိ မရှိ စစ်ဆေးခြင်း
+      final isInternetOn = await ConnectivityHandler.checkAndPromptInternet(
+        context,
+      );
+      if (!mounted || !isInternetOn) return;
+
+      // 2. GPS (Location) ပွင့် မပွင့် စစ်ဆေးခြင်း
+      final locationProvider = context.read<LocationProvider>();
+      final isGpsOn = await locationProvider.checkAndEnableLocationService(
+        context,
+      );
+      if (!mounted || !isGpsOn) return;
+
+      // 3. နှစ်ခုလုံး ပွင့်မှသာ Location Tracking စတင်မည်
+      final user = context.read<AuthProvider>().user;
+      if (user != null) {
+        await locationProvider.startLocationTracking(user.uid);
+      }
+    } finally {
+      _isCheckingServices = false;
+    }
+  }
+
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _pageController.dispose();
+    _connectivitySubscription.cancel();
     super.dispose();
   }
 
@@ -171,18 +246,19 @@ class _HomeViewState extends State<HomeView> {
       // ),
       IconButton(
         icon: Icon(Icons.logout, color: iconColor),
-        onPressed: () {
+        onPressed: () async {
           final authProvider = context.read<AuthProvider>();
           final locationProvider = context.read<LocationProvider>();
           final memberProvider = context.read<MemberProvider>();
           final languageProvider = context.read<LanguageProvider>();
 
           try {
-            authProvider.logout();
-            locationProvider.stopLocationTracking();
+            await locationProvider
+                .stopLocationTracking(); // Tracking အရင်ပိတ်ပါ
             memberProvider.clearData();
-            languageProvider.clearData();
             locationProvider.clearData();
+            languageProvider.clearData();
+            await authProvider.logout();
           } catch (_) {
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(

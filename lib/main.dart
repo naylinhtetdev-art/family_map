@@ -12,6 +12,7 @@ import 'package:family_map/views/home_view.dart';
 import 'package:family_map/views/login_view.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:flutter_localization/flutter_localization.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
@@ -42,7 +43,28 @@ void main() async {
     ],
     initLanguageCode: savedLanguageCode,
   );
-
+  // Foreground Task Configuration
+  FlutterForegroundTask.init(
+    androidNotificationOptions: AndroidNotificationOptions(
+      channelId: 'foreground_service',
+      channelName: 'Location Tracking Service',
+      channelDescription: 'Running location service in background.',
+      //channelImportance: NotificationChannelImportance.LOW,
+      //priority: NotificationPriority.LOW,
+      // ⭐ Importance ကို MIN ထားခြင်းဖြင့် Status Bar ပေါ်တွင် Icon မပေါ်တော့ပါ။
+      channelImportance: NotificationChannelImportance.MIN,
+      priority: NotificationPriority.MIN,
+    ),
+    iosNotificationOptions: const IOSNotificationOptions(),
+    foregroundTaskOptions: ForegroundTaskOptions(
+      eventAction: ForegroundTaskEventAction.repeat(30000),
+      autoRunOnBoot: false,
+      autoRunOnMyPackageReplaced: false,
+      stopWithTask: false,
+      allowWakeLock: true,
+      allowWifiLock: true,
+    ),
+  );
   runApp(
     MultiProvider(
       providers: [

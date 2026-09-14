@@ -41,8 +41,15 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this); // Lifecycle listen စလုပ်မည်
-    //_checkGps();
-    // 2. Realtime Internet ပိတ်/ဖွင့် စောင့်ကြည့်မည့် Stream ကို ဤနေရာတွင် Listen လုပ်ပါ
+
+    // Initial Screen Load တွင် GPS နှင့် Internet စစ်ဆေးခြင်း
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkServices();
+      _initConnectivityListener();
+    });
+  }
+
+  void _initConnectivityListener() {
     _connectivitySubscription = Connectivity().onConnectivityChanged.listen((
       List<ConnectivityResult> result,
     ) {
@@ -50,31 +57,26 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver {
         ConnectivityHandler.checkAndPromptInternet(context);
       }
     });
-
-    // Initial Screen Load တွင် GPS နှင့် Internet စစ်ဆေးခြင်း
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkServices();
-    });
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      //_checkGps();
-      _checkServices();
+      //_checkServices();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _checkServices();
+      });
+    }
+
+    if (state == AppLifecycleState.detached) {
+      final locationProvider = Provider.of<LocationProvider>(
+        context,
+        listen: false,
+      );
+      locationProvider.stopLocationTracking();
     }
   }
 
-  // Future<void> _checkGps() async {
-  //   final user = context.read<AuthProvider>().user;
-  //   final isGpsOn = await context
-  //       .read<LocationProvider>()
-  //       .checkAndEnableLocationService(context);
-
-  //   if (isGpsOn && user != null && mounted) {
-  //     context.read<MemberProvider>().startLocationTracking(user.uid);
-  //   }
-  // }
   Future<void> _checkServices() async {
     if (!mounted || _isCheckingServices) return;
     _isCheckingServices = true;
@@ -129,109 +131,120 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver {
     final bgColor = theme.scaffoldBackgroundColor;
     final textColor = theme.colorScheme.onSurface;
     final iconColor = theme.iconTheme.color ?? textColor;
-
-    return Scaffold(
-      backgroundColor: bgColor,
-      body: NestedScrollView(
-        floatHeaderSlivers: true,
-        headerSliverBuilder: (context, innerBoxIsScrolled) {
-          return [
-            if (index == 2)
-              SliverAppBar(
-                floating: true,
-                snap: true,
-                pinned: false,
-                backgroundColor: bgColor,
-                elevation: 8,
-                iconTheme: IconThemeData(color: iconColor),
-                titleSpacing: 10,
-                // title: Text(
-                //   AppLocale.appTitle.getString(context),
-                //   style: TextStyle(
-                //     color: AppColors.primary,
-                //     fontSize: 28.sp,
-                //     fontWeight: FontWeight.bold,
-                //   ),
-                // ),
-                title: Row(
-                  children: [
-                    Image.asset(
-                      'assets/logo/app_logo_no_bk.png',
-                      width: 32.w,
-                      height: 32.h,
-                      fit: BoxFit.contain,
-                    ),
-                    SizedBox(width: 8.w),
-                    // 2. Title Text
-                    Text(
-                      AppLocale.appTitle.getString(context),
-                      style: TextStyle(
-                        color: AppColors.primary,
-                        fontSize: 28.sp,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-                actions: _buildAppBarActions(iconColor),
-              ),
-          ];
-        },
-        body: PageView(
-          controller: _pageController,
-          physics: const NeverScrollableScrollPhysics(),
-          onPageChanged: (pageIndex) {
-            setState(() {
-              index = pageIndex;
-            });
-          },
-          children: pages,
-        ),
-      ),
-      bottomNavigationBar: NavigationBar(
+    return PopScope(
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) {
+          // App မှ ထွက်သွားပါက Location Tracking Service ကို ပိတ်မည်
+          final locationProvider = Provider.of<LocationProvider>(
+            context,
+            listen: false,
+          );
+          await locationProvider.stopLocationTracking();
+        }
+      },
+      child: Scaffold(
         backgroundColor: bgColor,
-        selectedIndex: index,
-        indicatorColor: Colors.transparent,
-        onDestinationSelected: _onNavigationTap,
-        labelTextStyle: WidgetStateProperty.resolveWith<TextStyle>((states) {
-          if (states.contains(WidgetState.selected)) {
-            return TextStyle(
-              color: AppColors.primary,
-              fontWeight: FontWeight.bold,
-            );
-          }
-          return TextStyle(color: textColor.withValues(alpha: 0.6));
-        }),
-        destinations: [
-          NavigationDestination(
-            icon: Icon(Icons.location_on, size: 24.r, color: iconColor),
-            selectedIcon: Icon(
-              Icons.location_on,
-              size: 24.r,
-              color: AppColors.primary,
-            ),
-            label: AppLocale.navLocation.getString(context),
+        body: NestedScrollView(
+          floatHeaderSlivers: true,
+          headerSliverBuilder: (context, innerBoxIsScrolled) {
+            return [
+              if (index == 2)
+                SliverAppBar(
+                  floating: true,
+                  snap: true,
+                  pinned: false,
+                  backgroundColor: bgColor,
+                  elevation: 8,
+                  iconTheme: IconThemeData(color: iconColor),
+                  titleSpacing: 10,
+                  // title: Text(
+                  //   AppLocale.appTitle.getString(context),
+                  //   style: TextStyle(
+                  //     color: AppColors.primary,
+                  //     fontSize: 28.sp,
+                  //     fontWeight: FontWeight.bold,
+                  //   ),
+                  // ),
+                  title: Row(
+                    children: [
+                      Image.asset(
+                        'assets/logo/app_logo_no_bk.png',
+                        width: 32.w,
+                        height: 32.h,
+                        fit: BoxFit.contain,
+                      ),
+                      SizedBox(width: 8.w),
+                      // 2. Title Text
+                      Text(
+                        AppLocale.appTitle.getString(context),
+                        style: TextStyle(
+                          color: AppColors.primary,
+                          fontSize: 28.sp,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  actions: _buildAppBarActions(iconColor),
+                ),
+            ];
+          },
+          body: PageView(
+            controller: _pageController,
+            physics: const NeverScrollableScrollPhysics(),
+            onPageChanged: (pageIndex) {
+              setState(() {
+                index = pageIndex;
+              });
+            },
+            children: pages,
           ),
-          NavigationDestination(
-            icon: Icon(Icons.group, size: 24.r, color: iconColor),
-            selectedIcon: Icon(
-              Icons.group,
-              size: 24.r,
-              color: AppColors.primary,
+        ),
+        bottomNavigationBar: NavigationBar(
+          backgroundColor: bgColor,
+          selectedIndex: index,
+          indicatorColor: Colors.transparent,
+          onDestinationSelected: _onNavigationTap,
+          labelTextStyle: WidgetStateProperty.resolveWith<TextStyle>((states) {
+            if (states.contains(WidgetState.selected)) {
+              return TextStyle(
+                color: AppColors.primary,
+                fontWeight: FontWeight.bold,
+              );
+            }
+            return TextStyle(color: textColor.withValues(alpha: 0.6));
+          }),
+          destinations: [
+            NavigationDestination(
+              icon: Icon(Icons.location_on, size: 24.r, color: iconColor),
+              selectedIcon: Icon(
+                Icons.location_on,
+                size: 24.r,
+                color: AppColors.primary,
+              ),
+              label: AppLocale.navLocation.getString(context),
             ),
-            label: AppLocale.navMember.getString(context),
-          ),
+            NavigationDestination(
+              icon: Icon(Icons.group, size: 24.r, color: iconColor),
+              selectedIcon: Icon(
+                Icons.group,
+                size: 24.r,
+                color: AppColors.primary,
+              ),
+              label: AppLocale.navMember.getString(context),
+            ),
 
-          NavigationDestination(
-            icon: Icon(Icons.person, size: 24.r, color: iconColor),
-            selectedIcon: Icon(
-              Icons.person,
-              size: 24.r,
-              color: AppColors.primary,
+            NavigationDestination(
+              icon: Icon(Icons.person, size: 24.r, color: iconColor),
+              selectedIcon: Icon(
+                Icons.person,
+                size: 24.r,
+                color: AppColors.primary,
+              ),
+              label: AppLocale.navProfile.getString(context),
             ),
-            label: AppLocale.navProfile.getString(context),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

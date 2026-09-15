@@ -13,6 +13,7 @@ import 'package:family_map/utils/constants.dart';
 import 'package:family_map/views/location_tap_screen.dart';
 import 'package:family_map/views/member_tap_screen.dart';
 import 'package:family_map/views/profile_tap_screen.dart';
+import 'package:family_map/views/track_record__tap_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localization/flutter_localization.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -34,6 +35,7 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver {
   final pages = const [
     LocationTapScreen(),
     MemberTapScreen(),
+    TrackRecordTapScreen(),
     ProfileTapScreen(),
   ];
 
@@ -148,7 +150,7 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver {
           floatHeaderSlivers: true,
           headerSliverBuilder: (context, innerBoxIsScrolled) {
             return [
-              if (index == 2)
+              if (index == 3)
                 SliverAppBar(
                   floating: true,
                   snap: true,
@@ -219,7 +221,7 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver {
               icon: Icon(Icons.location_on, size: 24.r, color: iconColor),
               selectedIcon: Icon(
                 Icons.location_on,
-                size: 24.r,
+                size: 26.r,
                 color: AppColors.primary,
               ),
               label: AppLocale.navLocation.getString(context),
@@ -228,17 +230,25 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver {
               icon: Icon(Icons.group, size: 24.r, color: iconColor),
               selectedIcon: Icon(
                 Icons.group,
-                size: 24.r,
+                size: 26.r,
                 color: AppColors.primary,
               ),
               label: AppLocale.navMember.getString(context),
             ),
-
+            NavigationDestination(
+              icon: Icon(Icons.map_outlined, size: 24.r, color: iconColor),
+              selectedIcon: Icon(
+                Icons.map,
+                size: 26.r,
+                color: AppColors.primary,
+              ),
+              label: AppLocale.navRecord.getString(context),
+            ),
             NavigationDestination(
               icon: Icon(Icons.person, size: 24.r, color: iconColor),
               selectedIcon: Icon(
                 Icons.person,
-                size: 24.r,
+                size: 26.r,
                 color: AppColors.primary,
               ),
               label: AppLocale.navProfile.getString(context),
@@ -281,17 +291,6 @@ class _HomeViewState extends State<HomeView> with WidgetsBindingObserver {
               );
             }
           }
-          // context.read<LocationProvider>().stopLocationTracking();
-          // context.read<MemberProvider>().clearData();
-          // context.read<LanguageProvider>().clearData();
-          // context.read<LocationProvider>().clearData();
-          // context.read<AuthProvider>().logout();
-          // if (context.mounted) {
-          //   Navigator.of(context).pushAndRemoveUntil(
-          //     MaterialPageRoute(builder: (_) => const MyApp()),
-          //     (_) => false,
-          //   );
-          // }
         },
       ),
     ];

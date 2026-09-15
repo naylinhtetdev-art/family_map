@@ -11,6 +11,7 @@ mixin AppLocale {
   static const String logout = 'logout';
   static const String navLocation = 'navLocation';
   static const String navMember = 'navMember';
+  static const String navRecord = 'navRecord';
   static const String navProfile = 'navProfile';
 
   static const Map<String, dynamic> EN = {
@@ -26,6 +27,7 @@ mixin AppLocale {
     logout: 'Logout',
     navLocation: 'Location',
     navMember: 'Member',
+    navRecord: 'Record',
     navProfile: 'Profile',
   };
 
@@ -42,6 +44,7 @@ mixin AppLocale {
     logout: 'ထွက်မည်',
     navLocation: 'တည်နေရာ',
     navMember: 'အဖွဲ့ဝင်',
+    navRecord: 'Record',
     navProfile: 'ကျွန်ုပ်',
   };
 }

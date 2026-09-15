@@ -446,4 +446,36 @@ class LocationProvider extends ChangeNotifier {
     _memberSubscription?.cancel();
     super.dispose();
   }
+
+  // ⭐ Firestore မှ တည်နေရာ ပြောင်းလဲမှုကို တိုက်ရိုက် Listen လုပ်သည့် Stream
+  void listenToUserLocationFromFirebase(String userId) {
+    _memberSubscription?.cancel();
+    _memberSubscription = FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .snapshots()
+        .listen((snapshot) {
+          if (snapshot.exists && snapshot.data() != null) {
+            final data = snapshot.data()!;
+            final double? lat = (data['latitude'] as num?)?.toDouble();
+            final double? lng = (data['longitude'] as num?)?.toDouble();
+
+            if (lat != null && lng != null) {
+              _currentPosition = Position(
+                latitude: lat,
+                longitude: lng,
+                timestamp: DateTime.now(),
+                accuracy: 0,
+                altitude: 0,
+                heading: 0,
+                speed: 0,
+                speedAccuracy: 0,
+                altitudeAccuracy: 0,
+                headingAccuracy: 0,
+              );
+              notifyListeners(); // ⭐ UI ကို ချက်ချင်း Refresh လုပ်ပေးမည်
+            }
+          }
+        });
+  }
 }

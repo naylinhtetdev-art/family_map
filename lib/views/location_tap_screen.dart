@@ -50,6 +50,17 @@ class _LocationTapScreenState extends State<LocationTapScreen> {
     super.initState();
     _loadSearchHistory();
 
+    // ⭐ Initial Location နဲ့ Stream စတင်ရန်
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<LocationProvider>().fetchInitialLocation();
+      final currentUserId = context.read<AuthProvider>().user?.uid;
+      if (currentUserId != null) {
+        // မိမိ၏ Firebase Location updates ကို Listen လုပ်ရန်
+        context.read<LocationProvider>().listenToUserLocationFromFirebase(
+          currentUserId,
+        );
+      }
+    });
     _searchFocusNode.addListener(() {
       setState(() {
         _showHistory = _searchFocusNode.hasFocus;
@@ -312,6 +323,13 @@ class _LocationTapScreenState extends State<LocationTapScreen> {
         ? LatLng(currentPos.latitude, currentPos.longitude)
         : const LatLng(16.8505666, 96.1286914);
 
+    // ⭐ GPS Position ပြောင်းတိုင်း Map Camera ကို အလိုအလျောက် လိုက်ရွှေ့ပေးရန်
+    // (Destination မရွေးထားချိန် သို့မဟုတ် Live Tracking လုပ်လိုချိန်)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (currentPos != null && _destinationLocation == null) {
+        _mapController.move(myLocation, _mapController.camera.zoom);
+      }
+    });
     final String myName =
         currentUser?.displayName ?? currentUser?.email?.split('@')[0] ?? 'You';
 

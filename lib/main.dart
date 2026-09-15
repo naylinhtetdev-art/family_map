@@ -5,6 +5,7 @@ import 'package:family_map/provider/language_provider.dart';
 import 'package:family_map/provider/location_provider.dart';
 import 'package:family_map/provider/member_provider.dart';
 import 'package:family_map/provider/theme_provider.dart';
+import 'package:family_map/provider/track_record_provider.dart';
 import 'package:family_map/utils/app_language.dart';
 import 'package:family_map/utils/constants.dart';
 import 'package:family_map/views/create_account_view.dart';
@@ -23,6 +24,7 @@ final GlobalKey<ScaffoldMessengerState> rootScaffoldMessengerKey =
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
   final results = await Future.wait([
     Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform),
     FlutterLocalization.instance.ensureInitialized(),
@@ -71,8 +73,12 @@ void main() async {
         ChangeNotifierProvider(create: (_) => ThemeProvider()..loadThemeMode()),
         ChangeNotifierProvider(create: (_) => LanguageProvider()),
         ChangeNotifierProvider(create: (_) => AuthProvider()),
-        ChangeNotifierProvider(create: (_) => LocationProvider()),
+        ChangeNotifierProvider(
+          create: (_) => LocationProvider()..fetchInitialLocation(),
+        ),
+        //ChangeNotifierProvider(create: (_) => LocationProvider()),
         ChangeNotifierProvider(create: (_) => MemberProvider()),
+        ChangeNotifierProvider(create: (_) => TrackRecordProvider()),
       ],
       child: const MyApp(),
     ),
@@ -151,13 +157,12 @@ class LandingPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
-    if (auth.loading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    } else if (auth.signedIn && auth.isRemembered) {
+
+    if (auth.signedIn && auth.isRemembered) {
       return const HomeView();
-    } else if (auth.signedIn) {
-      return const LoginView();
-    } else if (auth.isFirstTimeUser) {
+    }
+
+    if (auth.isFirstTimeUser) {
       return Scaffold(
         body: Stack(
           children: [
@@ -289,6 +294,13 @@ class LandingPage extends StatelessWidget {
         ),
       );
     }
+    if (auth.loading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+    if (auth.signedIn) {
+      return const LoginView();
+    }
+
     return const LoginView();
   }
 

@@ -717,15 +717,38 @@ class _TrackRecordTapScreenState extends State<TrackRecordTapScreen> {
       context: context,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
-          title: Text('$placeName Point'),
+          //title: Text('$placeName Point'),
+          titlePadding: EdgeInsets.zero, // Padding ညီအောင် zero ထားပေးပါ
+          title: Stack(
+            children: [
+              // Title Text
+              Padding(
+                padding: const EdgeInsets.only(
+                  left: 24.0,
+                  top: 20.0,
+                  right: 48.0,
+                ),
+                child: Text('$placeName Point'),
+              ),
+              // Close Icon Button
+              Positioned(
+                right: 8.0,
+                top: 8.0,
+                child: IconButton(
+                  icon: const Icon(Icons.close, color: Colors.grey),
+                  onPressed: () => Navigator.pop(dialogContext),
+                ),
+              ),
+            ],
+          ),
           content: const Text(
             'Do you want to go or remove \n this saved point?',
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Cancel'),
-            ),
+            // TextButton(
+            //   onPressed: () => Navigator.pop(dialogContext),
+            //   child: const Text('Cancel'),
+            // ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.redAccent,

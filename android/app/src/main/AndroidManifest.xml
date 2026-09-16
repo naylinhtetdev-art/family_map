@@ -1,5 +1,4 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -14,12 +13,21 @@
         android:label="Family Map"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon">
+        <!-- Foreground Task Service ကြေညာချက် -->
         <service
             android:name="com.pravera.flutter_foreground_task.service.ForegroundService"
-            android:stopWithTask="false"
             android:foregroundServiceType="location"
+            android:stopWithTask="true"
+            android:enabled="true"
+            android:exported="false" />
+
+        <!-- Geolocator Service ကြေညာချက် -->
+        <service
+            android:name="com.baseflow.geolocator.location.LocationService"
+            android:enabled="true"
             android:exported="false"
-            tools:replace="android:foregroundServiceType" />
+            android:stopWithTask="true"
+            android:foregroundServiceType="location" />
         <activity
             android:name=".MainActivity"
             android:exported="true"

@@ -168,6 +168,13 @@ class LocationTaskHandler extends TaskHandler {
   }
 
   @override
+  void onNotificationButtonPressed(String id) {
+    if (id == 'stopButton') {
+      FlutterForegroundTask.stopService();
+    }
+  }
+
+  @override
   void onReceiveData(Object data) {}
 }
 

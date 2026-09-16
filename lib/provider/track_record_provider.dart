@@ -67,7 +67,30 @@ class TrackRecordProvider extends ChangeNotifier {
               pointType: 'path',
             );
           }
+          notifyListeners();
         });
+  }
+
+  // 🔄 Active Session ရှိနေပါက SQLite မှ Path Points များကို ပြန်လည် Load လုပ်သည့် Function
+  Future<void> reloadCurrentSessionPath() async {
+    if (_isRecording && _currentSessionId != null) {
+      try {
+        final pointsData = await TrackDatabaseHelper.instance
+            .getPointsForSession(_currentSessionId!);
+        _recordedPath.clear();
+
+        for (var p in pointsData) {
+          if (p['pointType'] == 'path') {
+            _recordedPath.add(
+              LatLng(p['latitude'] as double, p['longitude'] as double),
+            );
+          }
+        }
+        notifyListeners();
+      } catch (e) {
+        debugPrint('Error reloading session path: $e');
+      }
+    }
   }
 
   // 🔴 Record ရပ်တန့်ခြင်း
@@ -86,6 +109,41 @@ class TrackRecordProvider extends ChangeNotifier {
     _isRecording = false;
     _currentSessionId = null;
     notifyListeners();
+  }
+
+  // ☁️ ဖုန်းအသစ် သို့မဟုတ် App ပြန်ပွင့်ချိန် Firestore ထဲမှ Records များကို ပြန်ဆွဲယူခြင်း
+  Future<void> fetchUserTracksFromFirebase(String userId) async {
+    try {
+      final snapshot = await _firestore
+          .collection('records')
+          .where('userId', isEqualTo: userId)
+          .orderBy('createdAt', descending: true)
+          .get();
+
+      _recordedPath.clear();
+
+      for (var doc in snapshot.docs) {
+        final data = doc.data();
+        final List pathPoints = data['pathPoints'] ?? [];
+
+        // Firestore ထဲမှ Path Points များကို Map Polyline အတွက် LatLng List အဖြစ် ပြောင်းပေးခြင်း
+        for (var p in pathPoints) {
+          if (p['latitude'] != null && p['longitude'] != null) {
+            _recordedPath.add(
+              LatLng(
+                (p['latitude'] as num).toDouble(),
+                (p['longitude'] as num).toDouble(),
+              ),
+            );
+          }
+        }
+      }
+
+      // SQLite DB ထဲသို့လည်း Synchronize ပြန်လုပ်ပေးခြင်း (Offline ရနိုင်ရန်)
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error fetching tracks from Firebase: $e');
+    }
   }
 
   // 📍 Tap / Long Press လုပ်ထားသော Marker ကို သိမ်းဆည်းခြင်း
@@ -251,24 +309,4 @@ class TrackRecordProvider extends ChangeNotifier {
       rethrow;
     }
   }
-
-  // Saved Location/Marker များကို Database ထဲ သိမ်းဆည်းခြင်း
-  // Future<void> saveCustomLocation({
-  //   required String userId,
-  //   required String placeName,
-  //   required LatLng point,
-  // }) async {
-  //   try {
-  //     await _firestore.collection('saved_locations').add({
-  //       'userId': userId,
-  //       'placeName': placeName,
-  //       'latitude': point.latitude,
-  //       'longitude': point.longitude,
-  //       'createdAt': FieldValue.serverTimestamp(),
-  //     });
-  //   } catch (e) {
-  //     debugPrint('Error saving location: $e');
-  //     rethrow;
-  //   }
-  // }
 }

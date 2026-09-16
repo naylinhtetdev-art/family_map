@@ -46,27 +46,51 @@ void main() async {
     initLanguageCode: savedLanguageCode,
   );
   // Foreground Task Configuration
-  FlutterForegroundTask.init(
-    androidNotificationOptions: AndroidNotificationOptions(
-      channelId: 'foreground_service',
-      channelName: 'Location Tracking Service',
-      channelDescription: 'Running location service in background.',
-      //channelImportance: NotificationChannelImportance.LOW,
-      //priority: NotificationPriority.LOW,
-      // ⭐ Importance ကို MIN ထားခြင်းဖြင့် Status Bar ပေါ်တွင် Icon မပေါ်တော့ပါ။
-      channelImportance: NotificationChannelImportance.MIN,
-      priority: NotificationPriority.MIN,
-    ),
-    iosNotificationOptions: const IOSNotificationOptions(),
-    foregroundTaskOptions: ForegroundTaskOptions(
-      eventAction: ForegroundTaskEventAction.repeat(30000),
-      autoRunOnBoot: false,
-      autoRunOnMyPackageReplaced: false,
-      stopWithTask: false,
-      allowWakeLock: true,
-      allowWifiLock: true,
-    ),
-  );
+  // FlutterForegroundTask.init(
+  //   androidNotificationOptions: AndroidNotificationOptions(
+  //     channelId: 'foreground_service',
+  //     channelName: 'Location Tracking Service',
+  //     channelDescription: 'Running location service in background.',
+  //     //channelImportance: NotificationChannelImportance.LOW,
+  //     //priority: NotificationPriority.LOW,
+  //     // ⭐ Importance ကို MIN ထားခြင်းဖြင့် Status Bar ပေါ်တွင် Icon မပေါ်တော့ပါ။
+  //     channelImportance: NotificationChannelImportance.MIN,
+  //     priority: NotificationPriority.MIN,
+  //   ),
+  //   iosNotificationOptions: const IOSNotificationOptions(),
+  //   foregroundTaskOptions: ForegroundTaskOptions(
+  //     eventAction: ForegroundTaskEventAction.repeat(30000),
+  //     autoRunOnBoot: false,
+  //     autoRunOnMyPackageReplaced: false,
+  //     stopWithTask: true,
+  //     allowWakeLock: true,
+  //     allowWifiLock: true,
+  //   ),
+  // );
+  void initForegroundTask() {
+    FlutterForegroundTask.init(
+      androidNotificationOptions: AndroidNotificationOptions(
+        channelId: 'foreground_service',
+        channelName: 'Location Tracking Service',
+        channelDescription: 'Running location service in background.',
+        channelImportance: NotificationChannelImportance
+            .LOW, // MIN သုံးပါက Android 14+ တွင် Exception တက်မည်
+        priority: NotificationPriority.LOW,
+
+        // foregroundServiceType: ForegroundServiceType.LOCATION,
+      ),
+      iosNotificationOptions: const IOSNotificationOptions(),
+      foregroundTaskOptions: ForegroundTaskOptions(
+        eventAction: ForegroundTaskEventAction.repeat(30000),
+        autoRunOnBoot: false,
+        autoRunOnMyPackageReplaced: false,
+        stopWithTask: true,
+        allowWakeLock: true,
+        allowWifiLock: true,
+      ),
+    );
+  }
+
   runApp(
     MultiProvider(
       providers: [

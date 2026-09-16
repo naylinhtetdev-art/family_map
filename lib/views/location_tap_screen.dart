@@ -39,7 +39,7 @@ class _LocationTapScreenState extends State<LocationTapScreen> {
 
   @override
   void dispose() {
-    _mapController.dispose();
+    //_mapController.dispose();
     _searchController.dispose();
     _searchFocusNode.dispose();
     super.dispose();

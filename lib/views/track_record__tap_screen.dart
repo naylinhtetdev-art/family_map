@@ -34,6 +34,26 @@ class _TrackRecordTapScreenState extends State<TrackRecordTapScreen> {
   final List<Marker> _customMarkers = [];
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+
+      final trackVM = context.read<TrackRecordProvider>();
+      final currentUser = context.read<AuthProvider>().user;
+
+      // 1. အကယ်၍ ဖုန်းထဲမှာ Record လုပ်လက်စ Active Session ရှိနေရင် Local SQLite DB မှ ပြန်ယူမည်
+      if (trackVM.isRecording) {
+        await trackVM.reloadCurrentSessionPath();
+      }
+      // 2. Active Session မရှိပါက (ဖုန်းအသစ် သို့မဟုတ် Fresh Launch ဖြစ်ပါက) Firebase Firestore မှ Data ဆွဲမည်
+      else if (currentUser != null) {
+        await trackVM.fetchUserTracksFromFirebase(currentUser.uid);
+      }
+    });
+  }
+
+  @override
   void dispose() {
     _mapController.dispose();
     super.dispose();
@@ -75,42 +95,6 @@ class _TrackRecordTapScreenState extends State<TrackRecordTapScreen> {
       },
     );
 
-    // final String? customName = await showDialog<String>(
-    //   context: context,
-    //   builder: (BuildContext dialogContext) {
-    //     return AlertDialog(
-    //       title: const Text('Save Location'),
-    //       content: TextField(
-    //         controller: nameController,
-    //         decoration: const InputDecoration(
-    //           labelText: 'Location Name',
-    //           hintText: 'Enter place name',
-    //         ),
-    //         autofocus: true,
-    //       ),
-    //       actions: [
-    //         TextButton(
-    //           onPressed: () => Navigator.pop(dialogContext, null),
-    //           child: const Text('Cancel'),
-    //         ),
-    //         ElevatedButton(
-    //           onPressed: () {
-    //             final text = nameController.text.trim();
-    //             Navigator.pop(
-    //               dialogContext,
-    //               text.isNotEmpty ? text : 'Saved Location',
-    //             );
-    //           },
-    //           child: const Text('Save'),
-    //         ),
-    //       ],
-    //     );
-    //   },
-    // );
-
-    // // Controller Memory leak မဖြစ်အောင် dispose လုပ်ခြင်း
-    // nameController.dispose();
-
     if (customName == null) return;
 
     FocusManager.instance.primaryFocus?.unfocus();
@@ -128,7 +112,7 @@ class _TrackRecordTapScreenState extends State<TrackRecordTapScreen> {
           width: 60.w,
           height: 60.h,
           child: GestureDetector(
-            onTap: () => _showRemoveMarkerDialog(tappedPoint),
+            onTap: () => _showRemoveMarkerDialog(tappedPoint, customName),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -406,59 +390,8 @@ class _TrackRecordTapScreenState extends State<TrackRecordTapScreen> {
                     ),
                 ],
               ),
-              // MarkerLayer(
-              //   markers: [
-              //     Marker(
-              //       point: myLocation,
-              //       width: 80.w,
-              //       height: 80.h,
-              //       child: Column(
-              //         mainAxisSize: MainAxisSize.min,
-              //         children: [
-              //           Container(
-              //             padding: EdgeInsets.symmetric(
-              //               horizontal: 6.w,
-              //               vertical: 2.h,
-              //             ),
-              //             decoration: BoxDecoration(
-              //               color: Colors.blueAccent,
-              //               borderRadius: BorderRadius.circular(8.r),
-              //             ),
-              //             child: Text(
-              //               myName,
-              //               style: TextStyle(
-              //                 color: Colors.white,
-              //                 fontSize: 10.sp,
-              //                 fontWeight: FontWeight.bold,
-              //               ),
-              //               maxLines: 1,
-              //               overflow: TextOverflow.ellipsis,
-              //             ),
-              //           ),
-              //           Image.asset(
-              //             'assets/logo/app_logo_no_bk.png',
-              //             width: 46.w,
-              //             height: 46.h,
-              //             fit: BoxFit.contain,
-              //           ),
-              //         ],
-              //       ),
-              //     ),
-              //     if (_destinationLocation != null)
-              //       Marker(
-              //         point: _destinationLocation!,
-              //         width: 80.w,
-              //         height: 80.h,
-              //         child: const Icon(
-              //           Icons.location_on,
-              //           color: Colors.red,
-              //           size: 45.0,
-              //         ),
-              //       ),
-              //     ..._customMarkers,
-              //   ],
-              // ),
-              // MarkerLayer အပိုင်းကို အောက်ပါ StreamBuilder ဖြင့် ဝန်းရံလိုက်ပါ
+
+              // MarkerLayer အပိုင်းကို အောက်ပါ StreamBuilder ဖြင့် ဝန်းရံ
               StreamBuilder<QuerySnapshot>(
                 stream: FirebaseFirestore.instance
                     .collection('saved_locations')
@@ -479,7 +412,8 @@ class _TrackRecordTapScreenState extends State<TrackRecordTapScreen> {
                         width: 60.w,
                         height: 60.h,
                         child: GestureDetector(
-                          onTap: () => _showRemoveMarkerDialog(point),
+                          onTap: () =>
+                              _showRemoveMarkerDialog(point, placeName),
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
@@ -567,6 +501,7 @@ class _TrackRecordTapScreenState extends State<TrackRecordTapScreen> {
                       // Database ထဲမှ Marker များနှင့် Memory ထဲမှ Marker များ ပေါင်းစပ်ခြင်း
                       ...dbMarkers,
                       ..._customMarkers,
+                      // ..._routePoints,
                     ],
                   );
                 },
@@ -772,13 +707,20 @@ class _TrackRecordTapScreenState extends State<TrackRecordTapScreen> {
     );
   }
 
-  void _showRemoveMarkerDialog(LatLng pointToRemove) {
+  void _showRemoveMarkerDialog(LatLng pointToRemove, String placeName) {
+    final locationVM = context.read<LocationProvider>();
+    final currentPos = locationVM.currentPosition;
+    final LatLng myLocation = currentPos != null
+        ? LatLng(currentPos.latitude, currentPos.longitude)
+        : const LatLng(16.8505666, 96.1286914);
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
-          title: const Text('Remove Marker'),
-          content: const Text('Do you want to remove this saved marker?'),
+          title: Text('$placeName Point'),
+          content: const Text(
+            'Do you want to go or remove \n this saved point?',
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
@@ -805,6 +747,17 @@ class _TrackRecordTapScreenState extends State<TrackRecordTapScreen> {
               },
               child: const Text(
                 'Delete',
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              onPressed: () {
+                _handleMapTap(pointToRemove, myLocation);
+                Navigator.pop(dialogContext);
+              },
+              child: const Text(
+                'Select',
                 style: TextStyle(color: Colors.white),
               ),
             ),

@@ -8,7 +8,7 @@ class TrackDatabaseHelper {
   TrackDatabaseHelper._init();
 
   Future<Database> get database async {
-    if (_database != null) return _database!;
+    if (_database != null && _database!.isOpen) return _database!;
     _database = await _initDB('track_records.db');
     return _database!;
   }
@@ -149,6 +149,7 @@ class TrackDatabaseHelper {
       'track_points',
       where: 'sessionId = ?',
       whereArgs: [sessionId],
+      //orderBy: 'id ASC',
     );
   }
 
